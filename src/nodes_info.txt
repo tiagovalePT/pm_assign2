@@ -1,0 +1,59 @@
+/objects/left/bounding_boxes
+
+header:
+  seq: 154
+  stamp:
+    secs: 1637713925
+    nsecs: 801117070
+  frame_id: "detection"
+image_header:
+  seq: 1553
+  stamp:
+    secs: 1517485369
+    nsecs: 880094683
+  frame_id: "left_optical"
+bounding_boxes:
+  -
+    probability: 0.355351746082
+    xmin: 524
+    ymin: 416
+    xmax: 569
+    ymax: 470
+    id: 0
+    Class: "person"
+  -
+    probability: 0.482842385769
+    xmin: 618
+    ymin: 437
+    xmax: 665
+    ymax: 482
+    id: 2
+    Class: "car"
+  -
+    probability: 0.402996599674
+    xmin: 633
+    ymin: 450
+    xmax: 975
+    ymax: 782
+    id: 2
+    Class: "car"
+  -
+    probability: 0.324865967035
+    xmin: 218
+    ymin: 461
+    xmax: 273
+    ymax: 518
+    id: 2
+    Class: "car"
+---
+
+-------------------------------------------- / / --------------------------------------------
+
+/objects/left/found_object
+header:
+  seq: 8
+  stamp:
+    secs: 1517485375
+    nsecs: 279975617
+  frame_id: "detection"
+count: 6
