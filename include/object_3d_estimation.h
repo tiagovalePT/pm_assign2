@@ -36,7 +36,8 @@
 
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
 int count_bb, ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
-int size_bb, biggest_width, biggest_height, width, height, id_bb, width_camera, height_camera, closerX, closerY, biggest_bb;
+int width_camera, height_camera, closerX, closerY;
+int size_bb = 0, biggest_width = 0, biggest_height = 0, width = 0, height=0, id_bb=0, biggest_bb=0;
 float min_dp, dp;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;

@@ -101,6 +101,48 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
 }
 
+void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
+
+  if(msg_BB != NULL){
+    int i = 0, z = 0;
+    size_bb = 0;
+    while(/*msg_BB->bounding_boxes[i].id*/ z < 3){
+      if(msg_BB->bounding_boxes[i].Class == "car")
+      {
+        width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
+        height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
+        size_bb = width * height;
+
+        if( size_bb > biggest_bb){
+          biggest_bb = size_bb;
+          biggest_width = width;
+          biggest_height = height;
+          id_bb = msg_BB->bounding_boxes[i].id;
+//          best_BB[count] = msg_BB->bounding_boxes[i].id;
+//          count++;
+
+//          if(biggest_bb < lowest_BB){
+//            lowest_BB = biggest_bb;
+//          }
+
+          ROI_xmin = msg_BB->bounding_boxes[i].xmin;
+          ROI_xmax = msg_BB->bounding_boxes[i].xmax;
+          ROI_ymin = msg_BB->bounding_boxes[i].ymin;
+          ROI_ymax = msg_BB->bounding_boxes[i].ymax;
+        }
+      }
+      i++;
+      z++;
+    }
+    ROS_ERROR("BIGGEST BB IS: %d || SIZE IS: %d %d %d", id_bb, biggest_bb, ROI_xmax-ROI_xmin, ROI_ymax-ROI_ymin);
+
+
+  }
+
+
+
+
+}
 
 
 
@@ -118,14 +160,17 @@ int main(int argc, char **argv)
     //n_public.getParam("/object_3d_estimation/teste", teste);
     //ROS_ERROR("%s", teste.c_str());
 
+    // First sincronization
     image_transport::ImageTransport it(n_public);
     //image_transport::Subscriber sub_imgleft = it.subscribe("/stereo/left/image_rect_color", 1, left_imgCB);
     message_filters::Subscriber<sensor_msgs::Image> sub_imgleft(n_public, "/stereo/left/image_rect_color", 1);
-
     //ros::Subscriber sub_pclrgb = n_public.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, pclCB);
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pclrgb(n_public, "/velodyne_points", 1);
 
     publisherCloudXYZ = n_public.advertise<PointCloudXYZ>("PCLTESTE",1);
+
+    // Second Callback
+    ros::Subscriber sub_boundingBoxes = n_public.subscribe<darknet_ros_msgs::BoundingBoxes>("/objects/left/bounding_boxes", 1, cb_BoundingBoxes);
 
 
     n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);

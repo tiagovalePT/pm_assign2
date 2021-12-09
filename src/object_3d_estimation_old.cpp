@@ -116,135 +116,135 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
 //Header header
 //int8 count
-//void callback_CloserCar(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB,
-//                        const sensor_msgs::PointCloud2ConstPtr& msg_pcl,
-//                        const sensor_msgs::ImageConstPtr& msg_DI,
-//                        const darknet_ros_msgs::ObjectCount::ConstPtr msg_CO
-//                        ){
+void callback_CloserCar(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB,
+                        const sensor_msgs::PointCloud2ConstPtr& msg_pcl,
+                        const sensor_msgs::ImageConstPtr& msg_DI,
+                        const darknet_ros_msgs::ObjectCount::ConstPtr msg_CO
+                        ){
 
 
-//  //Interessa a ordem q se faz isto? aka primeiro transform e dps fromrosmsg ou ao contrario?
-//  sensor_msgs::PointCloud2 result;
-//  pcl_ros::transformPointCloud(frame_id_img, *msg_pcl, result, *tf_listener);
+  //Interessa a ordem q se faz isto? aka primeiro transform e dps fromrosmsg ou ao contrario?
+  sensor_msgs::PointCloud2 result;
+  pcl_ros::transformPointCloud(frame_id_img, *msg_pcl, result, *tf_listener);
 
-//  msg_cloudXYZ.reset(new PointCloudXYZ);
-//  pcl::fromROSMsg(result, *msg_cloudXYZ);
+  msg_cloudXYZ.reset(new PointCloudXYZ);
+  pcl::fromROSMsg(result, *msg_cloudXYZ);
 
-//  cv::Mat depthMap;
-//  calculate_depthmap(msg_cloudXYZ, depthMap);
-
-
-//  count_bb = msg_CO->count;
-//  int count = 0;
-//  int greatest_so_far = 0;
-
-//  // Bounding Boxes
-//  if(msg_BB!=NULL){
-////    int biggest_bb = 0;
-
-////    width = (int) msg_BB->bounding_boxes[0].xmax - msg_BB->bounding_boxes[0].xmin;
-////    height = (int) msg_BB->bounding_boxes[0].ymax - msg_BB->bounding_boxes[0].ymin;
-////    best_BB[0] = width * height;
-
-////    for (int i = 0; i < 5; i++)
-////    {
-////      width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
-////      height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
-////      size_bb = width * height;
-////      if (size_bb > greatest_so_far){
-////        greatest_so_far = size_bb;
-
-////      }
-////     }
+  cv::Mat depthMap;
+  calculate_depthmap(msg_cloudXYZ, depthMap);
 
 
+  count_bb = msg_CO->count;
+  int count = 0;
+  int greatest_so_far = 0;
 
-//    for(unsigned long i = 0; i < count_bb-1; i++)
+  // Bounding Boxes
+  if(msg_BB!=NULL){
+//    int biggest_bb = 0;
+
+//    width = (int) msg_BB->bounding_boxes[0].xmax - msg_BB->bounding_boxes[0].xmin;
+//    height = (int) msg_BB->bounding_boxes[0].ymax - msg_BB->bounding_boxes[0].ymin;
+//    best_BB[0] = width * height;
+
+//    for (int i = 0; i < 5; i++)
 //    {
-//      if(msg_BB->bounding_boxes[i].Class == "car")
-//      {
-//        width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
-//        height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
-//        size_bb = width * height;
+//      width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
+//      height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
+//      size_bb = width * height;
+//      if (size_bb > greatest_so_far){
+//        greatest_so_far = size_bb;
 
-//        if( size_bb > biggest_bb){
-//          biggest_bb = size_bb;
-//          biggest_width = width;
-//          biggest_height = height;
-
-////          best_BB[count] = msg_BB->bounding_boxes[i].id;
-////          count++;
-
-////          if(biggest_bb < lowest_BB){
-////            lowest_BB = biggest_bb;
-////          }
-
-//          ROI_xmin = msg_BB->bounding_boxes[i].xmin;
-//          ROI_xmax = msg_BB->bounding_boxes[i].xmax;
-//          ROI_ymin = msg_BB->bounding_boxes[i].ymin;
-//          ROI_ymax = msg_BB->bounding_boxes[i].ymax;
-//        }
 //      }
-//    }
-//  }
-//  //size_bb = msg_BB->bounding_boxes[1].xmin;
-//  ROS_ERROR("BIGGEST BB IS: %d || SIZE IS: %d %d %d", id_bb, biggest_bb, ROI_xmax-ROI_xmin, ROI_ymax-ROI_ymin);
-//  //ROS_ERROR("BIGGEST BB IS: %d %d %d %d %d", best_BB[0], best_BB[1], best_BB[2], best_BB[3], best_BB[4]);
+//     }
 
 
 
-//  // Image
-//  cv_bridge::CvImagePtr cv_ptr;
-//  img1 = cv_bridge::toCvCopy(msg_DI, sensor_msgs::image_encodings::BGR8)->image;
+    for(unsigned long i = 0; i < count_bb-1; i++)
+    {
+      if(msg_BB->bounding_boxes[i].Class == "car")
+      {
+        width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
+        height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
+        size_bb = width * height;
 
-//    //cv::imshow("image", img1);
-//    //cv::waitKey(1);
+        if( size_bb > biggest_bb){
+          biggest_bb = size_bb;
+          biggest_width = width;
+          biggest_height = height;
 
-//  if(ROI_xmax-ROI_xmin > 0 &&  ROI_ymax-ROI_ymin > 0){
-//    cropedImage = img1(cv::Rect(ROI_xmin,ROI_ymin,biggest_width,biggest_height));
+//          best_BB[count] = msg_BB->bounding_boxes[i].id;
+//          count++;
 
-//    cropedDepthMap = depthMap(cv::Rect(ROI_xmin,ROI_ymin,biggest_width,biggest_height));
+//          if(biggest_bb < lowest_BB){
+//            lowest_BB = biggest_bb;
+//          }
 
-//    ROS_ERROR("ALMOST PRINTING %d %d", cropedImage.size().width, cropedImage.size().height);
-//    //    cv::imshow("Closest Car", cropedImage);
-//    //    cv::waitKey(1);
-//    //    cv::destroyWindow("Closest Car");
-//  }
-//  else {
-//    ROS_ERROR("NO IMAGE DETECTED YET");
-//  }
-
-
-//  // Calculate distance with deph map and ROI
-//  // depthMap
-//  width_camera = img1.size().width;
-//  height_camera = img1.size().height;
-
-//  min_dp = 0;
-
-//  for(int h = ROI_ymin; h < ROI_ymax; h++){
-//    for(int w = ROI_xmin; w < ROI_xmax; w++){
-//      dp = depthMap.at<float>(h, w);
-//      if(dp < min_dp){
-//        min_dp = dp;
-//        closerX = w;
-//        closerY = h;
-//      }
-//    }
-//  }
-//  ROS_ERROR("XYZ Closest Point: %d %d", closerX, closerY);
-
-//  // Publish
-//  sensor_msgs::ImagePtr ROI_RGB = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cropedImage).toImageMsg();
-//  sensor_msgs::ImagePtr ROI_DM = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cropedDepthMap).toImageMsg();
-//  //depthMap cropedDepthMap
-
-//  pub1.publish(ROI_RGB);
-//  pub2.publish(ROI_DM);
+          ROI_xmin = msg_BB->bounding_boxes[i].xmin;
+          ROI_xmax = msg_BB->bounding_boxes[i].xmax;
+          ROI_ymin = msg_BB->bounding_boxes[i].ymin;
+          ROI_ymax = msg_BB->bounding_boxes[i].ymax;
+        }
+      }
+    }
+  }
+  //size_bb = msg_BB->bounding_boxes[1].xmin;
+  ROS_ERROR("BIGGEST BB IS: %d || SIZE IS: %d %d %d", id_bb, biggest_bb, ROI_xmax-ROI_xmin, ROI_ymax-ROI_ymin);
+  //ROS_ERROR("BIGGEST BB IS: %d %d %d %d %d", best_BB[0], best_BB[1], best_BB[2], best_BB[3], best_BB[4]);
 
 
 
-//}
+  // Image
+  cv_bridge::CvImagePtr cv_ptr;
+  img1 = cv_bridge::toCvCopy(msg_DI, sensor_msgs::image_encodings::BGR8)->image;
+
+    //cv::imshow("image", img1);
+    //cv::waitKey(1);
+
+  if(ROI_xmax-ROI_xmin > 0 &&  ROI_ymax-ROI_ymin > 0){
+    cropedImage = img1(cv::Rect(ROI_xmin,ROI_ymin,biggest_width,biggest_height));
+
+    cropedDepthMap = depthMap(cv::Rect(ROI_xmin,ROI_ymin,biggest_width,biggest_height));
+
+    ROS_ERROR("ALMOST PRINTING %d %d", cropedImage.size().width, cropedImage.size().height);
+    //    cv::imshow("Closest Car", cropedImage);
+    //    cv::waitKey(1);
+    //    cv::destroyWindow("Closest Car");
+  }
+  else {
+    ROS_ERROR("NO IMAGE DETECTED YET");
+  }
+
+
+  // Calculate distance with deph map and ROI
+  // depthMap
+  width_camera = img1.size().width;
+  height_camera = img1.size().height;
+
+  min_dp = 0;
+
+  for(int h = ROI_ymin; h < ROI_ymax; h++){
+    for(int w = ROI_xmin; w < ROI_xmax; w++){
+      dp = depthMap.at<float>(h, w);
+      if(dp < min_dp){
+        min_dp = dp;
+        closerX = w;
+        closerY = h;
+      }
+    }
+  }
+  ROS_ERROR("XYZ Closest Point: %d %d", closerX, closerY);
+
+  // Publish
+  sensor_msgs::ImagePtr ROI_RGB = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cropedImage).toImageMsg();
+  sensor_msgs::ImagePtr ROI_DM = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cropedDepthMap).toImageMsg();
+  //depthMap cropedDepthMap
+
+  pub1.publish(ROI_RGB);
+  pub2.publish(ROI_DM);
+
+
+
+}
 
 
 int main(int argc, char **argv)

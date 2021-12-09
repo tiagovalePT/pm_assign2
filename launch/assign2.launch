@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-<arg name="run_detector" default="false" />
+<arg name="run_detector" default="true" />
 
 <!-- Bags name -->
 <arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
