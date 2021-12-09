@@ -1,0 +1,100 @@
+void msgCallback(const sensor_msgs::ImageConstPtr& msg)
+{
+  //ROS_ERROR("IN IMAGE CALLBACK");
+
+  cv_bridge::CvImagePtr cv_ptr;
+  img1 = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image;
+
+//  cv::imshow("image", img1);
+//  cv::waitKey(1);
+
+  if(ROI_xmax-ROI_xmin > 0 &&  ROI_ymax-ROI_ymin >0){
+    cv::Mat cropedImage = img1(cv::Rect(ROI_xmin,ROI_ymin,biggest_width,biggest_height));
+
+    ROS_ERROR("ALMOST PRINTING %d %d", cropedImage.size().width, cropedImage.size().height);
+    //    cv::imshow("Closest Car", cropedImage);
+    //    cv::waitKey(1);
+  }
+  else {
+    ROS_ERROR("NO IMAGE DETECTED YET");
+  }
+
+
+}
+
+
+//Header header
+//Header image_header
+//BoundingBox[] bounding_boxes
+
+//float64 probability
+//int64 xmin
+//int64 ymin
+//int64 xmax
+//int64 ymax
+//int16 id
+//string Class
+void cbBoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg)
+{
+  int biggest_bb = 0;
+  for(unsigned long i = 0; i < count_bb-1; i++)
+  {
+    if(msg->bounding_boxes[i].Class == "car")
+    {
+      width = (int) msg->bounding_boxes[i].xmax - msg->bounding_boxes[i].xmin;
+      height = (int) msg->bounding_boxes[i].ymax - msg->bounding_boxes[i].ymin;
+      size_bb = width * height;
+
+      if( size_bb > biggest_bb){
+        biggest_bb = size_bb;
+        biggest_width = width;
+        biggest_height = height;
+
+        ROI_xmin = msg->bounding_boxes[i].xmin;
+        ROI_xmax = msg->bounding_boxes[i].xmax;
+        ROI_ymin = msg->bounding_boxes[i].ymin;
+        ROI_ymax = msg->bounding_boxes[i].ymax;
+      }
+    }
+  }
+  ROS_ERROR("BIGGEST BB IS: %d || SIZE IS: %d %d %d", id_bb, biggest_bb, ROI_xmax-ROI_xmin, ROI_ymax-ROI_ymin);
+
+
+
+
+  //ROS_ERROR("IN BOUNDING BOX CALLBACK %d", msg->bounding_boxes[0].xmin);
+
+  //  std::cout<<"Bouding Boxes (header):" << msg->header <<std::endl;
+  //  std::cout<<"Bouding Boxes (image_header):" << msg->image_header <<std::endl;
+  //  std::cout<<"Bouding Boxes (Class):" << msg->bounding_boxes[0].Class <<std::endl;
+  //  std::cout<<"Bouding Boxes (xmin):" << msg->bounding_boxes[0].xmin <<std::endl;
+  //  std::cout<<"Bouding Boxes (xmax):" << msg->bounding_boxes[0].xmax <<std::endl;
+  //  std::cout<<"Bouding Boxes (ymin):" << msg->bounding_boxes[0].ymin <<std::endl;
+  //  std::cout<<"Bouding Boxes (ymax):" << msg->bounding_boxes[0].ymax <<std::endl;
+  //  std::cout << "\033[2J\033[1;1H";     // clear terminal
+
+
+}
+
+
+
+void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_msgs::PointCloud2ConstPtr& msg_pcl)
+{
+
+    cv::Mat leftimg = cv_bridge::toCvShare(msg_img, "bgr8")->image;
+
+    //cv::imshow("img_orig", leftimg);
+    //cv::waitKey(1);
+
+
+    //Interessa a ordem q se faz isto? aka primeiro transform e dps fromrosmsg ou ao contrario?
+    sensor_msgs::PointCloud2 result;
+    pcl_ros::transformPointCloud(frame_id_img, *msg_pcl, result, *tf_listener);
+
+    msg_cloudXYZ.reset(new PointCloudXYZ);
+    pcl::fromROSMsg(result, *msg_cloudXYZ);
+
+    cv::Mat depthMap;
+    calculate_depthmap(msg_cloudXYZ, depthMap);
+
+}

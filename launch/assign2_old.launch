@@ -5,11 +5,15 @@
 <!-- Bags name -->
 <arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
 <arg name="file_bag" default="coastalloop_carbreak" />
-<!-- <arg name="file_bag" default="coastalloop_track" /> -->
-<!-- <arg name="file_bag" default="coastalloop_tracking2" /> -->
+<!--<arg name="file_bag" default="coastalloop_track" />-->
+<!--<arg name="file_bag" default="coastalloop_tracking2" />-->
 
 <node ns="/stereo/left" name="image_proc_left" type="image_proc" pkg="image_proc"/>
 <node ns="/stereo/right" name="image_proc_right" type="image_proc" pkg="image_proc"/>
+
+
+<node name="object_3d_estimation" pkg="object_3d_estimation" type="object_3d_estimation" />
+<!--<node name="object_visualization" pkg="object_visualization" type="object_visualization" />-->
 
 <!-- Change the rate if needed:  -->
 <param name="use_sim_time" value="true"/>
@@ -19,6 +23,9 @@
 <node name="republish_left"  type="republish" pkg="image_transport" args="compressed in:=/stereo/left/image_raw raw out:=/stereo/left/image_raw" />
 <node name="republish_right" type="republish" pkg="image_transport" args="compressed in:=/stereo/right/image_raw raw out:=/stereo/right/image_raw" />
 
+<!-- Launch detector -->
+<include if="$(arg run_detector)" ns="dark2" file="$(find darknet_ros)/launch/darknet_ros.launch" >
+<arg name="ros_param_file" value="$(find darknet_ros)/config/ros_stereo_left.yaml" />
 
 <param name="robot_description" textfile="/home/tiago/catkin_ws/src/ROS_tutorial/pm_assign2/Config/tftree.urdf"/>
 <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state">
@@ -26,16 +33,6 @@
 <param name="use_tf_static" value ="true" />
 </node>
 
-<node name="object_3d_estimation" pkg="object_3d_estimation" type="object_3d_estimation">
-<param name="left_img_frameId" value="vision_frame"/>
-<param name="pointCloud_frameId" value="velodyne"/>
-<param name="teste" value="/stereo/left/image_rect_color"/>
-</node>
 
-
-
-<!-- Launch detector -->
-<include if="$(arg run_detector)" ns="dark2" file="$(find darknet_ros)/launch/darknet_ros.launch" >
-<arg name="ros_param_file" value="$(find darknet_ros)/config/ros_stereo_left.yaml" />
 </include>
 </launch>

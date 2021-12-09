@@ -1,5 +1,5 @@
-#ifndef OBJECT_3D_ESTIMATION_H
-#define OBJECT_3D_ESTIMATION_H
+#ifndef OBJECT_VISUALIZATION_H
+#define OBJECT_VISUALIZATION_H
 
 #include <ros/ros.h>
 #include "std_msgs/String.h"
@@ -34,30 +34,4 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-cv::Mat img1, img_car, cropedImage, cropedDepthMap;
-int count_bb, ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
-int size_bb, biggest_width, biggest_height, width, height, id_bb, width_camera, height_camera, closerX, closerY, biggest_bb;
-float min_dp, dp;
-
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
-typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
-
-std::string frame_id_img, frame_id_pointCloud;
-
-tf::TransformListener *tf_listener;
-
-struct cam_param {
-  double fx, fy, cx, cy;
-  double height, width;
-};
-
-int best_BB [5];
-int flag = 0;
-
-cam_param left_cam;
-
-ros::Publisher pub1;
-ros::Publisher pub2;
-ros::Publisher publisherCloudXYZ;
-
-#endif // OBJECT_3D_ESTIMATION_H
+#endif // OBJECT_VISUALIZATION_H
