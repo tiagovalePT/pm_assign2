@@ -35,10 +35,12 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
-int count_bb, ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
+int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
 int width_camera, height_camera, closerX, closerY;
-int size_bb = 0, biggest_width = 0, biggest_height = 0, width = 0, height=0, id_bb=0, biggest_bb=0;
+int count_BB = 0, sum_sizesBB = 0, width, height, size_bb;
 float min_dp, dp;
+
+darknet_ros_msgs::BoundingBoxes BB_cars;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;

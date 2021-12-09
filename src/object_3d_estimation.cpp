@@ -104,44 +104,50 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
   if(msg_BB != NULL){
-    int i = 0, z = 0;
-    size_bb = 0;
-    while(/*msg_BB->bounding_boxes[i].id*/ z < 3){
+    int mean_BB;
+    darknet_ros_msgs::BoundingBox BoundingBox_cars;
+
+    // Guardar todas as bounding boxes de carros
+    BB_cars.bounding_boxes.clear();
+    count_BB = 0;
+    sum_sizesBB = 0;
+    for (int i = 0; i < msg_BB->bounding_boxes.size(); i++){
       if(msg_BB->bounding_boxes[i].Class == "car")
       {
         width = (int) msg_BB->bounding_boxes[i].xmax - msg_BB->bounding_boxes[i].xmin;
         height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
         size_bb = width * height;
 
-        if( size_bb > biggest_bb){
-          biggest_bb = size_bb;
-          biggest_width = width;
-          biggest_height = height;
-          id_bb = msg_BB->bounding_boxes[i].id;
-//          best_BB[count] = msg_BB->bounding_boxes[i].id;
-//          count++;
+//        BB_cars->bounding_boxes[count_BB].xmin =
+//        BB_cars->bounding_boxes[count_BB].xmax = msg_BB->bounding_boxes[i].xmax;
+//        BB_cars->bounding_boxes[count_BB].ymin = msg_BB->bounding_boxes[i].ymin;
+//        BB_cars->bounding_boxes[count_BB].ymax = msg_BB->bounding_boxes[i].ymax;
+        BoundingBox_cars = msg_BB->bounding_boxes[i];
 
-//          if(biggest_bb < lowest_BB){
-//            lowest_BB = biggest_bb;
-//          }
+        BB_cars.bounding_boxes.push_back(BoundingBox_cars);
 
-          ROI_xmin = msg_BB->bounding_boxes[i].xmin;
-          ROI_xmax = msg_BB->bounding_boxes[i].xmax;
-          ROI_ymin = msg_BB->bounding_boxes[i].ymin;
-          ROI_ymax = msg_BB->bounding_boxes[i].ymax;
-        }
+
+        sum_sizesBB = sum_sizesBB + size_bb;
+
+        count_BB++;
       }
-      i++;
-      z++;
     }
-    ROS_ERROR("BIGGEST BB IS: %d || SIZE IS: %d %d %d", id_bb, biggest_bb, ROI_xmax-ROI_xmin, ROI_ymax-ROI_ymin);
+    ROS_ERROR("Bound box size: %d", size_bb);
 
 
-  }
+    // Calcular média dos tamanhos das bounding boxes
+    if(count_BB > 0)
+      mean_BB = sum_sizesBB / count_BB;
+    else
+      ROS_ERROR("No bounding boxes");
+
+    // Calcular a menor distância a partir do depth map de cada bounding box (unicamente das que têm um tamanho maior do que a média)
 
 
 
 
+
+   }
 }
 
 
