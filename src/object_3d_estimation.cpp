@@ -1,7 +1,7 @@
 #include "object_3d_estimation.h"
 
 
-void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ)
+void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 {
     //Meu v2
 
@@ -67,11 +67,13 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ)
     publisherCloudXYZ.publish(cloud_toPublish);
 
 
-    cv::imshow("Depth Map", depthMap);
-    cv::waitKey(1);
-
-//    cv::imshow("To publish", pxI_toPublish);
+//    cv::imshow("Depth Map", depthMap);
 //    cv::waitKey(1);
+
+    output = pxI_toPublish;
+
+    cv::imshow("To publish", pxI_toPublish);
+    cv::waitKey(1);
 }
 
 
@@ -97,14 +99,14 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
     pcl::fromROSMsg(*result, *msg_cloudXYZ);
 
 
-    calculate_depthmap(msg_cloudXYZ);
+    calculate_depthmap(msg_cloudXYZ, depthMap_global);
 
 }
 
 void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
   if(msg_BB != NULL){
-    int mean_BB;
+    int mean_BB = 0;
     darknet_ros_msgs::BoundingBox BoundingBox_cars;
 
     // Guardar todas as bounding boxes de carros
@@ -118,11 +120,13 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
         height = (int) msg_BB->bounding_boxes[i].ymax - msg_BB->bounding_boxes[i].ymin;
         size_bb = width * height;
 
-//        BB_cars->bounding_boxes[count_BB].xmin =
-//        BB_cars->bounding_boxes[count_BB].xmax = msg_BB->bounding_boxes[i].xmax;
-//        BB_cars->bounding_boxes[count_BB].ymin = msg_BB->bounding_boxes[i].ymin;
-//        BB_cars->bounding_boxes[count_BB].ymax = msg_BB->bounding_boxes[i].ymax;
-        BoundingBox_cars = msg_BB->bounding_boxes[i];
+        BoundingBox_cars.probability = msg_BB->bounding_boxes[i].probability;
+        BoundingBox_cars.xmin = msg_BB->bounding_boxes[i].xmin;
+        BoundingBox_cars.xmax = msg_BB->bounding_boxes[i].xmax;
+        BoundingBox_cars.ymin = msg_BB->bounding_boxes[i].ymin;
+        BoundingBox_cars.ymax = msg_BB->bounding_boxes[i].ymax;
+        BoundingBox_cars.id = count_BB;
+
 
         BB_cars.bounding_boxes.push_back(BoundingBox_cars);
 
@@ -132,7 +136,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
         count_BB++;
       }
     }
-    ROS_ERROR("Bound box size: %d", size_bb);
+    ROS_ERROR("Bound box size: %d", BB_cars.bounding_boxes[0].xmin);
 
 
     // Calcular média dos tamanhos das bounding boxes
@@ -141,8 +145,44 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     else
       ROS_ERROR("No bounding boxes");
 
-    // Calcular a menor distância a partir do depth map de cada bounding box (unicamente das que têm um tamanho maior do que a média)
+    //ROS_ERROR("Median of bb size: %d", mean_BB);
 
+    // Calcular a menor distância a partir do depth map de cada bounding box (unicamente das que têm um tamanho maior do que a média)
+    for(int j = 0; j < BB_cars.bounding_boxes.size(); j++){
+      width = (int) BB_cars.bounding_boxes[j].xmax - BB_cars.bounding_boxes[j].xmin;
+      height = (int) BB_cars.bounding_boxes[j].ymax - BB_cars.bounding_boxes[j].ymin;
+      size_bb = width * height;
+
+      ROI_xmin = BB_cars.bounding_boxes[j].xmin;
+      ROI_xmax = BB_cars.bounding_boxes[j].xmax;
+      ROI_ymin = BB_cars.bounding_boxes[j].ymin;
+      ROI_ymax = BB_cars.bounding_boxes[j].ymax;
+      float min_dp_frame = 100000000;
+
+      if( size_bb > mean_BB){
+        for(int y = ROI_ymin; y < ROI_ymax; y++){
+          for(int x = ROI_xmin; x < ROI_xmax; x++){
+            dp = depthMap_global.at<float>(y, x);
+
+            //ROS_ERROR("DIST: %d", dp);
+
+            // Calcular distância mínima dentro de cada bounding box
+            if(dp < min_dp_frame && dp > 0){
+              min_dp_frame = dp;
+            }
+          }
+        }
+        // Ver qual a bounding box que tem o valor mais pequeno para a distância
+        if(min_dp_frame < min_dp){
+          min_dp = min_dp_frame;
+
+          best_bb_id = BB_cars.bounding_boxes[j].id;
+          best_bb_size = size_bb;
+        }
+      }
+    }
+
+    ROS_ERROR("Best BoundingBox: %d | d: %f", best_bb_id, min_dp);
 
 
 

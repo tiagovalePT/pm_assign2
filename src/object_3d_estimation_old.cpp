@@ -33,7 +33,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ)
     cloud_toPublish->height = 1;
 
 
-    cv::Mat depthMap = cv::Mat::zeros(left_cam.height, left_cam.width, CV_8UC1);
+    depthMap = cv::Mat::zeros(left_cam.height, left_cam.width, CV_8UC1);
 
     cv::Mat pxI_toPublish = cv::Mat::zeros(left_cam.height, left_cam.width, CV_32FC1);
 

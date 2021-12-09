@@ -37,13 +37,15 @@
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
 int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
 int width_camera, height_camera, closerX, closerY;
-int count_BB = 0, sum_sizesBB = 0, width, height, size_bb;
-float min_dp, dp;
+int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_size;
+float min_dp = 100000000, dp;
 
 darknet_ros_msgs::BoundingBoxes BB_cars;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
+
+cv::Mat depthMap_global;
 
 std::string frame_id_img, frame_id_pointCloud;
 
