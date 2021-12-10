@@ -47,6 +47,8 @@ float min_dp = 100000000, dp;
 int biggest_width, biggest_height;
 int centerX, centerY;
 
+int width_img = 0, height_img = 0;
+
 darknet_ros_msgs::BoundingBoxes BB_cars;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;

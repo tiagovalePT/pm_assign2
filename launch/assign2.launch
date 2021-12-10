@@ -2,9 +2,16 @@
 <launch>
 <arg name="run_detector" default="false" />
 
+<!-- Publish tf tree -->
+<param name="robot_description" textfile="/home/tiago/catkin_ws/src/ROS_tutorial/pm_assign2/Config/tftree.urdf"/>
+<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state">
+<param name="publish_frequency" value="30" />
+<param name="use_tf_static" value ="true" />
+</node>
+
 <!-- Bags name -->
 <arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
-<arg name="file_bag" default="sit1_bag1" />
+<arg name="file_bag" default="2021-12-02-21-35-57" />
 
 <!--<arg name="file_bag" default="coastalloop_carbreak" />-->
 <!--<arg name="file_bag" default="coastalloop_track" />-->
@@ -15,18 +22,12 @@
 
 <!-- Change the rate if needed:  -->
 <param name="use_sim_time" value="true"/>
-<node pkg="rosbag" type="play" name="player" args="--clock -r 1 -l $(arg path_bag)$(arg file_bag).bag"/>
+<node pkg="rosbag" type="play" name="player" args="--clock -r 20.0 -l $(arg path_bag)$(arg file_bag).bag"/>
 
 <!-- Just to uncompress images-->
 <node name="republish_left"  type="republish" pkg="image_transport" args="compressed in:=/stereo/left/image_raw raw out:=/stereo/left/image_raw" />
 <node name="republish_right" type="republish" pkg="image_transport" args="compressed in:=/stereo/right/image_raw raw out:=/stereo/right/image_raw" />
 
-
-<param name="robot_description" textfile="/home/tiago/catkin_ws/src/ROS_tutorial/pm_assign2/Config/tftree.urdf"/>
-<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state">
-<param name="publish_frequency" value="30" />
-<param name="use_tf_static" value ="true" />
-</node>
 
 <node name="object_3d_estimation" pkg="object_3d_estimation" type="object_3d_estimation">
 <param name="left_img_frameId" value="vision_frame"/>
