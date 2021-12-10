@@ -34,18 +34,29 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <pcl/common/centroid.h>
+
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
 int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
+int ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest;
 int width_camera, height_camera, closerX, closerY;
 int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_size;
 float min_dp = 100000000, dp;
+int biggest_width, biggest_height;
 
 darknet_ros_msgs::BoundingBoxes BB_cars;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
 
+PointCloudXYZ::Ptr cloud_for_centroid;
+PointCloudXYZ::Ptr cloud_of_centroid;
+
 cv::Mat depthMap_global;
+
+cv::Mat leftimg;
+
+cv::Mat cropped_depthMap;
 
 std::string frame_id_img, frame_id_pointCloud;
 

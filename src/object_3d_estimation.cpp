@@ -10,6 +10,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 //    msg_cloudXYZRGB->height = 1;
 
     PointCloudXYZ::Ptr cloud_toPublish (new PointCloudXYZ);
+
     cloud_toPublish->header.frame_id = "vision_frame";
     pcl_conversions::toPCL(ros::Time::now(), cloud_toPublish->header.stamp);
     cloud_toPublish->height = 1;
@@ -62,6 +63,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
             }
         }
     }
+    cloud_for_centroid = cloud_toPublish;
 
     cloud_toPublish->width = cloud_toPublish->points.size();
     publisherCloudXYZ.publish(cloud_toPublish);
@@ -85,7 +87,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_msgs::PointCloud2ConstPtr& msg_pcl)
 {
 
-    cv::Mat leftimg = cv_bridge::toCvShare(msg_img, "bgr8")->image;
+    leftimg = cv_bridge::toCvShare(msg_img, "bgr8")->image;
 
     cv::imshow("img_orig", leftimg);
     cv::waitKey(1);
@@ -136,8 +138,6 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
         count_BB++;
       }
     }
-    ROS_ERROR("Bound box size: %d", BB_cars.bounding_boxes[0].xmin);
-
 
     // Calcular média dos tamanhos das bounding boxes
     if(count_BB > 0)
@@ -158,6 +158,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
       ROI_ymin = BB_cars.bounding_boxes[j].ymin;
       ROI_ymax = BB_cars.bounding_boxes[j].ymax;
       float min_dp_frame = 100000000;
+      min_dp = 100000000;
 
       if( size_bb > mean_BB){
         for(int y = ROI_ymin; y < ROI_ymax; y++){
@@ -178,13 +179,48 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
           best_bb_id = BB_cars.bounding_boxes[j].id;
           best_bb_size = size_bb;
+          ROI_xmin_closest = BB_cars.bounding_boxes[j].xmin;
+          ROI_xmax_closest = BB_cars.bounding_boxes[j].xmax;
+          ROI_ymin_closest = BB_cars.bounding_boxes[j].ymin;
+          ROI_ymax_closest = BB_cars.bounding_boxes[j].ymax;
         }
       }
     }
 
-    ROS_ERROR("Best BoundingBox: %d | d: %f", best_bb_id, min_dp);
+    ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
+    rectangle( depthMap_global, cv::Point(ROI_xmin_closest, ROI_ymin_closest), cv::Point(ROI_xmax_closest, ROI_ymax_closest), cv::Scalar(255) );
+
+    cv::imshow("Image with Bounding Box", depthMap_global);
+    cv::waitKey(1);
+
+    biggest_width = ROI_xmax_closest - ROI_xmin_closest;
+    biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
 
+    //cropped_depthMap = depthMap_global(cv::Rect(ROI_xmin_closest, ROI_ymin_closest, biggest_width, biggest_height));
+    //pcl::computeCentroid(pointCloud, outCentroid);
+
+    // Calculate centroid of ROI in the point cloud
+    int u, v, posFinal_px, posFinal_py, pxValue;
+
+    double x, y, z;
+
+
+    for (int i = 0; i < cloud_for_centroid->points.size(); i++)
+    {
+        if(cloud_for_centroid->points[i].x > ROI_xmin_closest && ROI_xmin_closest < ROI_xmax_closest &&
+           cloud_for_centroid->points[i].y > ROI_ymin_closest && ROI_ymin_closest < ROI_ymax_closest)
+        {
+          pcl::PointXYZ pointPCL;
+          pointPCL.x = cloud_for_centroid->points[i].x;
+          pointPCL.y = cloud_for_centroid->points[i].y;
+          pointPCL.z = cloud_for_centroid->points[i].z;
+          cloud_of_centroid->points.push_back(pointPCL);
+        }
+    }
+
+    pcl::PointXYZ centroid;
+    pcl::compute3DCentroid(cloud_of_centroid, centroid);
 
 
    }
