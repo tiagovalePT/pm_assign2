@@ -246,6 +246,28 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     //pcl::ComputeCentroid(cloud_of_centroid, centroid);
 
 
+//    // Publish PointCloudXYZRGB
+//    msg_cloud_xyz_rgb.reset(new PointCloudXYZRGB);
+//    msg_cloud_xyz_rgb->header.frame_id = "left_optical";
+//    pcl_conversions::toPCL(ros::Time::now(), msg_cloud_xyz_rgb->header.stamp);
+//    msg_cloud_xyz_rgb->height = 1;
+//    msg_cloud_xyz_rgb->width = depthMap_global.size();
+//    msg_cloud_xyz_rgb->points.resize(msg_cloud_xyz_rgb->width);
+//    for(auto i=0, j=0; i < msg_cloud_xyz_rgb->width; i++) {
+//        if(depthMap_global[i].x == -1000 || depthMap_global[i].y == -1000)
+//            continue;
+//        msg_cloud_xyz_rgb->points[j].x = depthMap_global[i].x;
+//        msg_cloud_xyz_rgb->points[j].y = depthMap_global[i].y;
+//        msg_cloud_xyz_rgb->points[j].z = depthMap_global[i].z;
+//        auto point_rgb = img_left.ptr<cv::Point3_<uchar>>(good_left[i].x, good_left[i].y);
+//        msg_cloud_xyz_rgb->points[j].r = point_rgb->z;
+//        msg_cloud_xyz_rgb->points[j].g = point_rgb->y;
+//        msg_cloud_xyz_rgb->points[j].b = point_rgb->x;
+//        j++;
+//    }
+//    pub_cloud_XYZRGB.publish(msg_cloud_xyz_rgb);
+
+
 
 
    }

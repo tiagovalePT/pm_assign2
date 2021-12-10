@@ -54,6 +54,7 @@ typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
 
 PointCloudXYZ::Ptr cloud_for_centroid;
 PointCloudXYZ::Ptr cloud_of_centroid;
+PointCloudXYZRGB::Ptr msg_cloud_xyz_rgb;
 
 cv::Mat depthMap_global;
 
