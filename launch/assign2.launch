@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-<arg name="run_detector" default="true" />
+<arg name="run_detector" default="false" />
 
 <!-- Bags name -->
 <arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
-<!--<arg name="file_bag" default="sit1_bag1" />-->
+<arg name="file_bag" default="sit1_bag1" />
 
-<arg name="file_bag" default="coastalloop_carbreak" />
+<!--<arg name="file_bag" default="coastalloop_carbreak" />-->
 <!--<arg name="file_bag" default="coastalloop_track" />-->
 <!--<arg name="file_bag" default="coastalloop_tracking2" />-->
 
