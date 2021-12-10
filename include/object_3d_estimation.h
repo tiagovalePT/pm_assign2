@@ -36,6 +36,8 @@
 
 #include <pcl/common/centroid.h>
 
+#define THRESHOLD_CENTROID 50
+
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
 int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
 int ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest;
@@ -43,7 +45,7 @@ int width_camera, height_camera, closerX, closerY;
 int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_size;
 float min_dp = 100000000, dp;
 int biggest_width, biggest_height;
-double centerX, centerY;
+int centerX, centerY;
 
 darknet_ros_msgs::BoundingBoxes BB_cars;
 

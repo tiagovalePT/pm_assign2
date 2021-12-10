@@ -199,13 +199,26 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     centerY = ROI_ymin_closest + biggest_height/2;
 
     // Show center in depthMap
-    rectangle( depthMap_global, cv::Point(centerX-10, centerY-10), cv::Point(centerX+10, centerY+10), cv::Scalar(255) );
+    rectangle( depthMap_global, cv::Point(centerX-THRESHOLD_CENTROID, centerY-THRESHOLD_CENTROID), cv::Point(centerX+THRESHOLD_CENTROID, centerY+THRESHOLD_CENTROID), cv::Scalar(255) );
 
     cv::imshow("Image with Bounding Box", depthMap_global);
     cv::waitKey(1);
 
-    double segment_center = depthMap_global.at<float>(centerY, centerX);
-    ROS_ERROR("Depth of center: %f", segment_center);
+    float min_dp1 = 100000000;
+
+
+    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
+      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
+        dp = depthMap_global.at<float>(y, x);
+        //ROS_ERROR("DP = %f", dp);
+        if(dp < min_dp1 && dp > 0){
+         min_dp1 = dp;
+        }
+      }
+    }
+
+    //float segment_center = depthMap_global.at<float>(centerY, centerX);
+    ROS_ERROR("Depth of center: %f", min_dp1);
 
     //cropped_depthMap = depthMap_global(cv::Rect(ROI_xmin_closest, ROI_ymin_closest, biggest_width, biggest_height));
     //pcl::computeCentroid(pointCloud, outCentroid);
