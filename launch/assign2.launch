@@ -10,8 +10,11 @@
 </node>
 
 <!-- Bags name -->
-<arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
-<arg name="file_bag" default="2021-12-02-21-35-57" />
+<!--<arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />-->
+<arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/recorded/" />
+<!--<arg name="file_bag" default="coastalloop_carbreak1_2021-12-10-22-19-55" />-->
+<arg name="file_bag" default="coastalloop__track1_2021-12-10-22-30-31" />
+<!--<arg name="file_bag" default="coastalloop_tracking21_2021-12-10-22-36-26" />-->
 
 <!--<arg name="file_bag" default="coastalloop_carbreak" />-->
 <!--<arg name="file_bag" default="coastalloop_track" />-->
@@ -22,7 +25,7 @@
 
 <!-- Change the rate if needed:  -->
 <param name="use_sim_time" value="true"/>
-<node pkg="rosbag" type="play" name="player" args="--clock -r 20.0 -l $(arg path_bag)$(arg file_bag).bag"/>
+<node pkg="rosbag" type="play" name="player" args="--clock -r 10 -l $(arg path_bag)$(arg file_bag).bag"/>
 
 <!-- Just to uncompress images-->
 <node name="republish_left"  type="republish" pkg="image_transport" args="compressed in:=/stereo/left/image_raw raw out:=/stereo/left/image_raw" />

@@ -110,7 +110,20 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
     if(!leftimg.empty()){
       if(ROI_xmin_closest > 0 && ROI_xmax_closest > 0 &&  ROI_ymin_closest > 0 && ROI_ymax_closest > 0){
+        // Show bounding box
         rectangle( leftimg, cv::Point(ROI_xmin_closest, ROI_ymin_closest), cv::Point(ROI_xmax_closest, ROI_ymax_closest), cv::Scalar(0,215,255) );
+
+        for(int i=0; i< BB_cars.bounding_boxes.size(); i++){
+          if(BB_cars.bounding_boxes[i].id != best_bb_id){
+            rectangle( leftimg, cv::Point(BB_cars.bounding_boxes[i].xmin, BB_cars.bounding_boxes[i].ymin), cv::Point(BB_cars.bounding_boxes[i].xmax, BB_cars.bounding_boxes[i].ymax), cv::Scalar(110,198,120) );
+          }
+
+        }
+
+        // Show center
+
+
+        rectangle( leftimg, cv::Point(centerX-THRESHOLD_CENTROID, centerY-THRESHOLD_CENTROID), cv::Point(centerX+THRESHOLD_CENTROID, centerY+THRESHOLD_CENTROID), cv::Scalar(184,53,255) );
       }
       cv::imshow("img_orig", leftimg);
       cv::waitKey(1);
@@ -218,14 +231,13 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
 
 
-//    biggest_width = ROI_xmax_closest - ROI_xmin_closest;
-//    biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
-//    centerX = ROI_xmin_closest + biggest_width/2;
-//    centerY = ROI_ymin_closest + biggest_height/2;
+    biggest_width = ROI_xmax_closest - ROI_xmin_closest;
+    biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
-//    // Show center in depthMap
-//    rectangle( depthMap_global, cv::Point(centerX-THRESHOLD_CENTROID, centerY-THRESHOLD_CENTROID), cv::Point(centerX+THRESHOLD_CENTROID, centerY+THRESHOLD_CENTROID), cv::Scalar(255) );
+    centerX = ROI_xmin_closest + biggest_width/2;
+    centerY = ROI_ymin_closest + biggest_height/2;
+
 
 //    cv::imshow("Image with Bounding Box", depthMap_global);
 //    cv::waitKey(1);

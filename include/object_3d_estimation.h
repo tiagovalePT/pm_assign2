@@ -36,7 +36,7 @@
 
 #include <pcl/common/centroid.h>
 
-#define THRESHOLD_CENTROID 50
+#define THRESHOLD_CENTROID 10
 
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
 int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
