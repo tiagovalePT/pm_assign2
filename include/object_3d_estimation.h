@@ -43,6 +43,7 @@ int width_camera, height_camera, closerX, closerY;
 int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_size;
 float min_dp = 100000000, dp;
 int biggest_width, biggest_height;
+double centerX, centerY;
 
 darknet_ros_msgs::BoundingBoxes BB_cars;
 

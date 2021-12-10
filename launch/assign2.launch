@@ -4,9 +4,9 @@
 
 <!-- Bags name -->
 <arg name="path_bag" default="/home/tiago/catkin_ws/Bag/pm_assign2/" />
-<!--<arg name="file_bag" default="coastalloop_carbreak" />-->
-<arg name="file_bag" default="coastalloop_track" />
-<!-- <arg name="file_bag" default="coastalloop_tracking2" /> -->
+<arg name="file_bag" default="coastalloop_carbreak" />
+<!--<arg name="file_bag" default="coastalloop_track" />-->
+<!--<arg name="file_bag" default="coastalloop_tracking2" />-->
 
 <node ns="/stereo/left" name="image_proc_left" type="image_proc" pkg="image_proc"/>
 <node ns="/stereo/right" name="image_proc_right" type="image_proc" pkg="image_proc"/>
