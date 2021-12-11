@@ -1,6 +1,7 @@
 #ifndef OBJECT_VISUALIZATION_H
 #define OBJECT_VISUALIZATION_H
 
+
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include <geometry_msgs/Twist.h>
@@ -33,5 +34,30 @@
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
+
+#include <pcl/common/centroid.h>
+
+
+
+std::string frame_id_img, frame_id_pointCloud;
+
+
+struct cam_param {
+  double fx, fy, cx, cy;
+  double height, width;
+};
+
+
+cam_param left_cam;
+
+cv::Mat leftimg;
+
+darknet_ros_msgs::BoundingBoxes BBs;
+
+darknet_ros_msgs::BoundingBox nearestBB;
+
+tf::TransformListener *tf_listener;
+
+geometry_msgs::PoseStamped poseXYZ;
 
 #endif // OBJECT_VISUALIZATION_H
