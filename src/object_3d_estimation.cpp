@@ -144,7 +144,16 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
    cloudRGB_toPublish->header.frame_id = "vision_frame";
    pcl_conversions::toPCL(ros::Time::now(), cloudRGB_toPublish->header.stamp);
    cloudRGB_toPublish->height = 1;
+   std::vector<cv::Point2f> centers;
 
+   //pointPCLRGB.z = depthMap_input.at<float>(i,j);
+   //cv::kmeans(InputArray data, 2, InputOutputArray bestLabels, TermCriteria criteria, int flags, OutputArray centers)
+   //cv::kmeans(data, K ,labels,cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.),MAX_ITERATIONS,cv::KMEANS_PP_CENTERS,colors);
+
+   std::vector<int> kmeans_output;
+   cv::kmeans(depthMap_global, 2, kmeans_output, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.), 5, cv::KMEANS_PP_CENTERS);
+
+   //kmeans(points, clusterCount, labels,TermCriteria( TermCriteria::EPS+TermCriteria::COUNT, 10, 1.0), 3, KMEANS_PP_CENTERS, centers);
 
    for (int i = 0; i < depthMap_global.size().height; i++) {
        for (int j = 0; j < depthMap_global.size().width; j++) {
@@ -152,7 +161,6 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
            if(j > ROI_xmin_closest && j < ROI_xmax_closest && i > ROI_ymin_closest && i < ROI_ymax_closest) {
                pcl::PointXYZRGB pointPCLRGB;
 
-               //pointPCLRGB.z = depthMap_input.at<float>(i,j);
 
                if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 1000) {
 
@@ -301,28 +309,28 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     biggest_width = ROI_xmax_closest - ROI_xmin_closest;
     biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
-    centerX = ROI_xmin_closest + biggest_width/2;
-    centerY = ROI_ymin_closest + biggest_height/2;
+//    centerX = ROI_xmin_closest + biggest_width/2;
+//    centerY = ROI_ymin_closest + biggest_height/2;
 
-    // Create a smaller bounding box around the center of the object
-    float min_dp1 = 100000000;
-    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
-      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
-        if(centerX-THRESHOLD_CENTROID >= 0 &&
-           centerY-THRESHOLD_CENTROID >= 0 &&
-           centerX+THRESHOLD_CENTROID < width_img &&
-           centerY+THRESHOLD_CENTROID < height_img
-           ){
-          dp = depthMap_global.at<float>(y, x);
-          //ROS_ERROR("DP = %f", dp);
-          if(dp < min_dp1 && dp > 0){
-           min_dp1 = dp;
-          }
-        }
-      }
-    }
+//    // Create a smaller bounding box around the center of the object
+//    float min_dp1 = 100000000;
+//    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
+//      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
+//        if(centerX-THRESHOLD_CENTROID >= 0 &&
+//           centerY-THRESHOLD_CENTROID >= 0 &&
+//           centerX+THRESHOLD_CENTROID < width_img &&
+//           centerY+THRESHOLD_CENTROID < height_img
+//           ){
+//          dp = depthMap_global.at<float>(y, x);
+//          //ROS_ERROR("DP = %f", dp);
+//          if(dp < min_dp1 && dp > 0){
+//           min_dp1 = dp;
+//          }
+//        }
+//      }
+//    }
 
-    ROS_ERROR("Closest Distance: %f", min_dp1);
+//    ROS_ERROR("Closest Distance: %f", min_dp1);
 
     // Calculate centroid of ROI with cloudRGB_toPublish
     pcl::CentroidPoint<pcl::PointXYZ> centroid;
@@ -370,21 +378,6 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     pubNearestCar.publish(nearest_car);
 
 
-//   float64 probability
-//   int64 xmin
-//   int64 ymin
-//   int64 xmax
-//   int64 ymax
-//   int16 id
-//   string Class
-//       best_bb_id = BB_cars.bounding_boxes[j].id;
-//       best_bb_size = size_bb;
-//       ROI_xmin_closest = BB_cars.bounding_boxes[j].xmin;
-//       ROI_xmax_closest = BB_cars.bounding_boxes[j].xmax;
-//       ROI_ymin_closest = BB_cars.bounding_boxes[j].ymin;
-//       ROI_ymax_closest = BB_cars.bounding_boxes[j].ymax;
-
-
 
    }
 }
@@ -421,7 +414,7 @@ int main(int argc, char **argv)
 
     n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);
     n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
-    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/vision_frame", 1);
+    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/nearest_Pose", 1);
     pubNearestCar = n_public.advertise<darknet_ros_msgs::BoundingBox>("/nearest_car", 1);
 
 
