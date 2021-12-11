@@ -324,10 +324,8 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
     ROS_ERROR("Closest Distance: %f", min_dp1);
 
-    // Calculate centroid with cloudRGB_toPublish
+    // Calculate centroid of ROI with cloudRGB_toPublish
     pcl::CentroidPoint<pcl::PointXYZ> centroid;
-
-
 
     for(int i=0; i < cloudRGB_global->points.size(); i++){
       centroid.add (pcl::PointXYZ(cloudRGB_global->points[i].x,
