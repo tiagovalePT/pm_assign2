@@ -1,14 +1,19 @@
 #include "object_visualization.h"
 
 
+
 void left_imgCB (const sensor_msgs::ImageConstPtr& msg_img)
 {
     leftimg = cv_bridge::toCvShare(msg_img, "bgr8")->image;
 
     for (int i = 0; i < BBs.bounding_boxes.size(); i++) {
 
-        if(BBs.bounding_boxes[i].xmin == nearestBB.xmin && BBs.bounding_boxes[i].ymin == nearestBB.ymin &&
-           BBs.bounding_boxes[i].xmax == nearestBB.xmax && BBs.bounding_boxes[i].ymax == nearestBB.ymax) {
+        if(BBs.bounding_boxes[i].xmin > 0.95 * nearestBB.xmin && BBs.bounding_boxes[i].xmin <= 1.05 * nearestBB.xmin &&
+           BBs.bounding_boxes[i].ymin > 0.95 * nearestBB.ymin && BBs.bounding_boxes[i].ymin <= 1.05 * nearestBB.ymin &&
+           BBs.bounding_boxes[i].xmax > 0.95 * nearestBB.xmax && BBs.bounding_boxes[i].xmax <= 1.05 * nearestBB.xmax &&
+           BBs.bounding_boxes[i].ymax > 0.95 * nearestBB.ymax && BBs.bounding_boxes[i].ymax <= 1.05 * nearestBB.ymax &&
+           poseXYZ.pose.position.x > 0 && poseXYZ.pose.position.x < 10 && abs(poseXYZ.pose.position.y) < 5) {
+
 
             std::string coord = "(X,Y;Z) = (" + std::to_string(poseXYZ.pose.position.x) + "; " +
                                                 std::to_string(poseXYZ.pose.position.y) + "; " +
