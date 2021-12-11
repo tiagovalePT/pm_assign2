@@ -46,6 +46,8 @@ int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_s
 float min_dp = 100000000, dp;
 int biggest_width, biggest_height;
 int centerX, centerY;
+float fov_x, fov_y;
+int centroidX = 0, centroidY = 0;
 
 int width_img = 0, height_img = 0;
 
@@ -53,6 +55,8 @@ darknet_ros_msgs::BoundingBoxes BB_cars;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
+
+PointCloudXYZRGB::Ptr cloudRGB_global (new PointCloudXYZRGB);
 
 PointCloudXYZ::Ptr cloud_for_centroid;
 PointCloudXYZ::Ptr cloud_of_centroid;
@@ -78,8 +82,7 @@ int flag = 0;
 
 cam_param left_cam;
 
-ros::Publisher pub1;
-ros::Publisher pub2;
-ros::Publisher publisherCloudXYZ;
+ros::Publisher pubPose;
+ros::Publisher publisherCloudXYZ, publisherCloudXYZRGB;
 
 #endif // OBJECT_3D_ESTIMATION_H

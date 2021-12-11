@@ -15,6 +15,11 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
     pcl_conversions::toPCL(ros::Time::now(), cloud_toPublish->header.stamp);
     cloud_toPublish->height = 1;
 
+    // Calculate the FOV of the camera (in x)
+//    fov_x = 2 * atan2( left_cam.width, (2*left_cam.fx) );
+//    fov_y = 2 * atan2( left_cam.height, (2*left_cam.fy) );
+
+//    ROS_ERROR("FOV CAMERA: %f %f", fov_x, fov_y);
 
     cv::Mat depthMap = cv::Mat::zeros(left_cam.height, left_cam.width, CV_8UC1);
 
@@ -123,14 +128,75 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
         // Show center
 
 
-        rectangle( leftimg, cv::Point(centerX-THRESHOLD_CENTROID, centerY-THRESHOLD_CENTROID), cv::Point(centerX+THRESHOLD_CENTROID, centerY+THRESHOLD_CENTROID), cv::Scalar(184,53,255) );
+        rectangle( leftimg, cv::Point(centroidX-THRESHOLD_CENTROID, centroidY-THRESHOLD_CENTROID), cv::Point(centroidX+THRESHOLD_CENTROID, centroidY+THRESHOLD_CENTROID), cv::Scalar(184,53,255) );
       }
       cv::imshow("img_orig", leftimg);
       cv::waitKey(1);
     }
 
 
+
+   //Publish car PCL |A3|
+
+
+   PointCloudXYZRGB::Ptr cloudRGB_toPublish (new PointCloudXYZRGB);
+
+   cloudRGB_toPublish->header.frame_id = "vision_frame";
+   pcl_conversions::toPCL(ros::Time::now(), cloudRGB_toPublish->header.stamp);
+   cloudRGB_toPublish->height = 1;
+
+
+   for (int i = 0; i < depthMap_global.size().height; i++) {
+       for (int j = 0; j < depthMap_global.size().width; j++) {
+
+           if(j > ROI_xmin_closest && j < ROI_xmax_closest && i > ROI_ymin_closest && i < ROI_ymax_closest) {
+               pcl::PointXYZRGB pointPCLRGB;
+
+               //pointPCLRGB.z = depthMap_input.at<float>(i,j);
+
+               if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 1000) {
+
+                   pointPCLRGB.z = depthMap_global.at<float>(i,j);
+
+               //ROS_ERROR("z= %f", pointPCLRGB.z);
+               }
+
+               else {
+                   continue;
+               }
+
+               pointPCLRGB.x = (pointPCLRGB.z * j - pointPCLRGB.z * left_cam.cx) / left_cam.fx;
+               pointPCLRGB.y = (pointPCLRGB.z * i - pointPCLRGB.z * left_cam.cy) / left_cam.fy;
+
+                if(!leftimg.empty()){
+                    pointPCLRGB.r = leftimg.at<cv::Vec3b>(i,j)[2];
+                    pointPCLRGB.g = leftimg.at<cv::Vec3b>(i,j)[1];
+                    pointPCLRGB.b = leftimg.at<cv::Vec3b>(i,j)[0];
+                }
+
+
+//                if(pointPCLRGB.z > 2000)
+//                ROS_ERROR("i = %d j = %d", i, j);
+               //ROS_ERROR("%f %f", left_cam.width, left_cam.height);
+               //ROS_ERROR("%d %d %d %d", ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
+               //ROS_ERROR("x = %f  y = %f  z = %f  r= %d g = %d b = %d", pointPCLRGB.x, pointPCLRGB.y, pointPCLRGB.z, pointPCLRGB.r, pointPCLRGB.g, pointPCLRGB.b);
+
+
+               cloudRGB_toPublish->points.push_back(pointPCLRGB);
+           }
+
+       }
+
+   }
+
+   cloudRGB_toPublish->width = cloudRGB_toPublish->points.size();
+   publisherCloudXYZRGB.publish(cloudRGB_toPublish);
+
+   cloudRGB_global = cloudRGB_toPublish;
+
 }
+
+
 
 void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
@@ -228,7 +294,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
       }
     }
 
-    ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
+    //ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
 
 
 
@@ -238,73 +304,62 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     centerX = ROI_xmin_closest + biggest_width/2;
     centerY = ROI_ymin_closest + biggest_height/2;
 
+    // Create a smaller bounding box around the center of the object
+    float min_dp1 = 100000000;
+    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
+      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
+        if(centerX-THRESHOLD_CENTROID >= 0 &&
+           centerY-THRESHOLD_CENTROID >= 0 &&
+           centerX+THRESHOLD_CENTROID < width_img &&
+           centerY+THRESHOLD_CENTROID < height_img
+           ){
+          dp = depthMap_global.at<float>(y, x);
+          //ROS_ERROR("DP = %f", dp);
+          if(dp < min_dp1 && dp > 0){
+           min_dp1 = dp;
+          }
+        }
+      }
+    }
 
-//    cv::imshow("Image with Bounding Box", depthMap_global);
-//    cv::waitKey(1);
+    ROS_ERROR("Closest Distance: %f", min_dp1);
 
-//    float min_dp1 = 100000000;
-
-
-//    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
-//      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
-//        dp = depthMap_global.at<float>(y, x);
-//        //ROS_ERROR("DP = %f", dp);
-//        if(dp < min_dp1 && dp > 0){
-//         min_dp1 = dp;
-//        }
-//      }
-//    }
-
-//    //float segment_center = depthMap_global.at<float>(centerY, centerX);
-//    ROS_ERROR("Depth of center: %f", min_dp1);
-
-//    //cropped_depthMap = depthMap_global(cv::Rect(ROI_xmin_closest, ROI_ymin_closest, biggest_width, biggest_height));
-//    //pcl::computeCentroid(pointCloud, outCentroid);
-
-//    // Calculate centroid of ROI in the point cloud
-//    int u, v, posFinal_px, posFinal_py, pxValue;
-
-//    double x, y, z;
+    // Calculate centroid with cloudRGB_toPublish
+    pcl::CentroidPoint<pcl::PointXYZ> centroid;
 
 
-//    for (int i = 0; i < cloud_for_centroid->points.size(); i++)
-//    {
-//        if(cloud_for_centroid->points[i].x > ROI_xmin_closest && ROI_xmin_closest < ROI_xmax_closest &&
-//           cloud_for_centroid->points[i].y > ROI_ymin_closest && ROI_ymin_closest < ROI_ymax_closest)
-//        {
-//          pcl::PointXYZ pointPCL;
-//          pointPCL.x = cloud_for_centroid->points[i].x;
-//          pointPCL.y = cloud_for_centroid->points[i].y;
-//          pointPCL.z = cloud_for_centroid->points[i].z;
-//          cloud_of_centroid->points.push_back(pointPCL);
-//        }
-//    }
 
-    pcl::PointXYZ centroid;
-    //pcl::ComputeCentroid(cloud_of_centroid, centroid);
+    for(int i=0; i < cloudRGB_global->points.size(); i++){
+      centroid.add (pcl::PointXYZ(cloudRGB_global->points[i].x,
+                                   cloudRGB_global->points[i].y,
+                                   cloudRGB_global->points[i].z));
+    }
+
+    pcl::PointXYZ c1;
+    centroid.get (c1);
+
+    float pitch = atan2(c1.x, (c1.z + 1E-5));
+    float roll = atan2(-c1.y, (c1.z + 1E-5));
 
 
-//    // Publish PointCloudXYZRGB
-//    msg_cloud_xyz_rgb.reset(new PointCloudXYZRGB);
-//    msg_cloud_xyz_rgb->header.frame_id = "left_optical";
-//    pcl_conversions::toPCL(ros::Time::now(), msg_cloud_xyz_rgb->header.stamp);
-//    msg_cloud_xyz_rgb->height = 1;
-//    msg_cloud_xyz_rgb->width = depthMap_global.size();
-//    msg_cloud_xyz_rgb->points.resize(msg_cloud_xyz_rgb->width);
-//    for(auto i=0, j=0; i < msg_cloud_xyz_rgb->width; i++) {
-//        if(depthMap_global[i].x == -1000 || depthMap_global[i].y == -1000)
-//            continue;
-//        msg_cloud_xyz_rgb->points[j].x = depthMap_global[i].x;
-//        msg_cloud_xyz_rgb->points[j].y = depthMap_global[i].y;
-//        msg_cloud_xyz_rgb->points[j].z = depthMap_global[i].z;
-//        auto point_rgb = img_left.ptr<cv::Point3_<uchar>>(good_left[i].x, good_left[i].y);
-//        msg_cloud_xyz_rgb->points[j].r = point_rgb->z;
-//        msg_cloud_xyz_rgb->points[j].g = point_rgb->y;
-//        msg_cloud_xyz_rgb->points[j].b = point_rgb->x;
-//        j++;
-//    }
-//    pub_cloud_XYZRGB.publish(msg_cloud_xyz_rgb);
+    ROS_ERROR("Centroid: %f %f %f %f %f", c1.x, c1.y, c1.z, pitch, roll);
 
+    tf2::Quaternion myQuaternion;
+
+    // Valorização do A3: publish a ‘pose’ message
+    geometry_msgs::PoseStamped poseVF;
+    poseVF.header.frame_id = "vision_frame";
+    poseVF.pose.position.x = c1.x;
+    poseVF.pose.position.y = c1.y;
+    poseVF.pose.position.z = c1.z;
+    myQuaternion.setRPY(roll, pitch, 0);
+    myQuaternion = myQuaternion.normalize();
+    poseVF.pose.orientation.x = myQuaternion[0];
+    poseVF.pose.orientation.y = myQuaternion[1];
+    poseVF.pose.orientation.z = myQuaternion[2];
+    poseVF.pose.orientation.w = myQuaternion[3];
+
+    pubPose.publish(poseVF);
 
 
 
@@ -335,6 +390,7 @@ int main(int argc, char **argv)
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pclrgb(n_public, "/velodyne_points", 1);
 
     publisherCloudXYZ = n_public.advertise<PointCloudXYZ>("PCLTESTE",1);
+    publisherCloudXYZRGB = n_public.advertise<PointCloudXYZRGB>("CARRO",1);
 
     // Second Callback
     ros::Subscriber sub_boundingBoxes = n_public.subscribe<darknet_ros_msgs::BoundingBoxes>("/objects/left/bounding_boxes", 1, cb_BoundingBoxes);
@@ -342,6 +398,7 @@ int main(int argc, char **argv)
 
     n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);
     n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
+    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/vision_frame", 1);
 
 
     boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;
