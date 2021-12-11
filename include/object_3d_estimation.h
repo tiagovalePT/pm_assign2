@@ -21,14 +21,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/types.hpp>
 
-//#include "opencv2/core/utility.hpp"
-//#include "opencv2/video/tracking.hpp"
-//#include "opencv2/imgproc.hpp"
-//#include "opencv2/videoio.hpp"
-//#include "opencv2/highgui.hpp"
-//#include <iostream>
-//#include <ctype.h>
-
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
