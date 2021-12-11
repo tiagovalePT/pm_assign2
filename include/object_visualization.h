@@ -47,6 +47,7 @@ struct cam_param {
   double height, width;
 };
 
+float nearest_car_width, nearest_car_height;
 
 cam_param left_cam;
 

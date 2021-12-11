@@ -19,7 +19,12 @@ void left_imgCB (const sensor_msgs::ImageConstPtr& msg_img)
                                                 std::to_string(poseXYZ.pose.position.y) + "; " +
                                                 std::to_string(poseXYZ.pose.position.z) + ")";
 
+            std::string sizeCar = "Width = " + std::to_string(nearest_car_width) + "; " +
+                                  "Height = " + std::to_string(nearest_car_height) + ".";
+
             putText(leftimg, coord, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin - 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(255, 255, 255), 1.8, cv::LINE_AA);
+            putText(leftimg, sizeCar, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymax + 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(255, 255, 255), 1.8, cv::LINE_AA);
+
             rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(0,0,255));
 
 
@@ -78,6 +83,13 @@ void cb_poseXYZ(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
 }
 
+void cb_carSize(const geometry_msgs::Point::ConstPtr& msg_car_size){
+
+  nearest_car_width = msg_car_size->x;
+  nearest_car_height = msg_car_size->y;
+
+}
+
 
 
 
@@ -105,7 +117,7 @@ int main(int argc, char **argv)
 
    ros::Subscriber sub_nearestBB = n_public.subscribe<darknet_ros_msgs::BoundingBox>("/nearest_car", 1, cb_nearestBB);
    ros::Subscriber sub_poseXYZ = n_public.subscribe<geometry_msgs::PoseStamped>("/nearest_Pose", 1, cb_poseXYZ);
-
+   ros::Subscriber sub_carSize = n_public.subscribe<geometry_msgs::Point>("/nearest_car_size", 1, cb_carSize);
 
 
    n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);

@@ -170,7 +170,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
   avg_z_depthROI = avg_z_depthROI/aux;
   //ROS_ERROR("Media = %f", avg_z_depthROI);
-
+  float PCLRGB_xmin = 100000, PCLRGB_xmax = 0, PCLRGB_ymin = 100000, PCLRGB_ymax = 0;
 
   for (int i = 0; i < depthMap_global.size().height; i++) {
       for (int j = 0; j < depthMap_global.size().width; j++) {
@@ -200,6 +200,24 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
                    pointPCLRGB.b = leftimg.at<cv::Vec3b>(i,j)[0];
                }
 
+               // Min and Max distances of x and y -> to calculate width and height of car
+               if(pointPCLRGB.x < PCLRGB_xmin)
+               {
+                 PCLRGB_xmin = pointPCLRGB.x;
+               }
+               if(pointPCLRGB.x > PCLRGB_xmax)
+               {
+                 PCLRGB_xmax = pointPCLRGB.x;
+               }
+               if(pointPCLRGB.y < PCLRGB_ymin)
+               {
+                 PCLRGB_ymin = pointPCLRGB.y;
+               }
+               if(pointPCLRGB.y > PCLRGB_ymax)
+               {
+                 PCLRGB_ymax = pointPCLRGB.y;
+               }
+
 
 //                if(pointPCLRGB.z > 2000)
 //                ROS_ERROR("i = %d j = %d", i, j);
@@ -219,6 +237,15 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
   publisherCloudXYZRGB.publish(cloudRGB_toPublish);
 
   cloudRGB_global = cloudRGB_toPublish;
+
+  geometry_msgs::Point size_car;
+
+  size_car.x = PCLRGB_xmax - PCLRGB_xmin;
+  size_car.y = PCLRGB_ymax - PCLRGB_ymin;
+
+  //ROS_ERROR("width car: %f | height car: %f", size_car.x, size_car.y);
+
+  pubSizeCar.publish(size_car);
 
 }
 
@@ -366,7 +393,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
    float roll = atan2(-c1.y, (c1.z + 1E-5));
 
 
-   ROS_ERROR("Centroid: %f %f %f %f %f", c1.x, c1.y, c1.z, pitch, roll);
+   //ROS_ERROR("Centroid: %f %f %f %f %f", c1.x, c1.y, c1.z, pitch, roll);
 
    tf2::Quaternion myQuaternion;
 
@@ -434,6 +461,7 @@ int main(int argc, char **argv)
    n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/nearest_Pose", 1);
    pubNearestCar = n_public.advertise<darknet_ros_msgs::BoundingBox>("/nearest_car", 1);
+   pubSizeCar = n_public.advertise<geometry_msgs::Point>("/nearest_car_size", 1);
 
 
    boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;
