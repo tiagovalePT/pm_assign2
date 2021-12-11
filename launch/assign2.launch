@@ -36,9 +36,12 @@
 <node name="object_3d_estimation" pkg="object_3d_estimation" type="object_3d_estimation">
 <param name="left_img_frameId" value="vision_frame"/>
 <param name="pointCloud_frameId" value="velodyne"/>
-<param name="teste" value="/stereo/left/image_rect_color"/>
 </node>
 
+<node name="object_visualization" pkg="object_3d_estimation" type="object_visualization">
+<param name="left_img_frameId" value="vision_frame"/>
+<param name="pointCloud_frameId" value="velodyne"/>
+</node>
 
 
 <!-- Launch detector -->
