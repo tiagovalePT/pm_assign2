@@ -294,7 +294,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
       }
     }
 
-    //ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
+    ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
 
 
 
@@ -346,7 +346,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
     tf2::Quaternion myQuaternion;
 
-    // Valorização do A3: publish a ‘pose’ message
+    // Valorização do A3: publish a ‘pose’ message from the centroid
     geometry_msgs::PoseStamped poseVF;
     poseVF.header.frame_id = "vision_frame";
     poseVF.pose.position.x = c1.x;
@@ -360,6 +360,31 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
     poseVF.pose.orientation.w = myQuaternion[3];
 
     pubPose.publish(poseVF);
+
+    // Publish the bounding box from the nearest car -> This will be used in A4 (object_visualization)
+    darknet_ros_msgs::BoundingBox nearest_car;
+    nearest_car.id = best_bb_id;
+    nearest_car.xmax = ROI_xmax_closest;
+    nearest_car.xmin = ROI_xmin_closest;
+    nearest_car.ymin = ROI_ymin_closest;
+    nearest_car.ymax = ROI_ymax_closest;
+
+    pubNearestCar.publish(nearest_car);
+
+
+//   float64 probability
+//   int64 xmin
+//   int64 ymin
+//   int64 xmax
+//   int64 ymax
+//   int16 id
+//   string Class
+//       best_bb_id = BB_cars.bounding_boxes[j].id;
+//       best_bb_size = size_bb;
+//       ROI_xmin_closest = BB_cars.bounding_boxes[j].xmin;
+//       ROI_xmax_closest = BB_cars.bounding_boxes[j].xmax;
+//       ROI_ymin_closest = BB_cars.bounding_boxes[j].ymin;
+//       ROI_ymax_closest = BB_cars.bounding_boxes[j].ymax;
 
 
 
@@ -399,6 +424,7 @@ int main(int argc, char **argv)
     n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);
     n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
     pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/vision_frame", 1);
+    pubNearestCar = n_public.advertise<darknet_ros_msgs::BoundingBox>("/nearest_car", 1);
 
 
     boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;

@@ -83,6 +83,7 @@ int flag = 0;
 cam_param left_cam;
 
 ros::Publisher pubPose;
+ros::Publisher pubNearestCar;
 ros::Publisher publisherCloudXYZ, publisherCloudXYZRGB;
 
 #endif // OBJECT_3D_ESTIMATION_H
