@@ -25,18 +25,11 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
    pcl::PointXYZ minpt, maxpt;
    pcl::getMinMax3D(*PclXYZ,minpt,maxpt);
 
-//    ROS_ERROR("Min x: %f", minpt.x);
-//    ROS_ERROR("Min y: %f", minpt.y);
-//    ROS_ERROR("Min z: %f", minpt.z);
-//    ROS_ERROR("Max x: %f", maxpt.x);
-//    ROS_ERROR("Max y: %f", maxpt.y);
-//    ROS_ERROR("Max z: %f", maxpt.z);
-
    int u, v, posFinal_px, posFinal_py, pxValue;
 
    double x, y, z;
 
-   // Percorre todos os pontos da point cloud -> calcula o u e v a partir do (x,y,z) da pcl
+   // Percorre todos os pontos da point cloud -> calcula o u e v a partir do (x,y,z) da pcl -> 3D to 2D
    for (int i = 0; i < PclXYZ->points.size(); i++) {
        if(PclXYZ->points[i].z == PclXYZ->points[i].z) {
            x = PclXYZ->points[i].x;
@@ -100,17 +93,19 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 //    cv::imshow("img_orig", leftimg);
 //    cv::waitKey(1);
 
-   //
+   //Fazer transformada de velodyne para vision_frame
    sensor_msgs::PointCloud2::Ptr result (new sensor_msgs::PointCloud2);
    pcl_ros::transformPointCloud(frame_id_img, *msg_pcl, *result, *tf_listener);
 
+   //From pcl to rosmsg
    PointCloudXYZ::Ptr msg_cloudXYZ (new PointCloudXYZ);
    pcl::fromROSMsg(*result, *msg_cloudXYZ);
 
-  // Chamada da função que calcula o depth map
+  // Função que calcula o depth map
    calculate_depthmap(msg_cloudXYZ, depthMap_global);
 
    // Debug: para mostrar as bounding boxes sem o node object_visualization
+
 //   if(!leftimg.empty()){
 //     if(ROI_xmin_closest > 0 && ROI_xmax_closest > 0 &&  ROI_ymin_closest > 0 && ROI_ymax_closest > 0){
 //       // Show bounding box
@@ -137,6 +132,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
   //Publish car PCL |A3|
   PointCloudXYZRGB::Ptr cloudRGB_toPublish (new PointCloudXYZRGB);
 
+  //Montar msg para ser publicada
   cloudRGB_toPublish->header.frame_id = "vision_frame";
   pcl_conversions::toPCL(ros::Time::now(), cloudRGB_toPublish->header.stamp);
   cloudRGB_toPublish->height = 1;
@@ -145,7 +141,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
   float avg_z_depthROI=0;
   int aux = 0;
 
-  // Calcular a média da depth map dentro da region of interest
+  // Calcular a média dos valores do depth map dentro da region of interest
   if(!depthMap_global.empty()) {
       for (int i = ROI_ymin_closest; i < ROI_ymax_closest; i++) {
           for (int j = ROI_xmin_closest; j <ROI_xmax_closest; j++) {
@@ -157,7 +153,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
           }
       }
   }
-
+  //Média calculada
   avg_z_depthROI = avg_z_depthROI/aux;
 
   //ROS_ERROR("Media = %f", avg_z_depthROI);
@@ -171,6 +167,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
           if(j > ROI_xmin_closest && j < ROI_xmax_closest && i > ROI_ymin_closest && i < ROI_ymax_closest) {
               pcl::PointXYZRGB pointPCLRGB;
 
+              //Se a condição se realizar -> publica ponto
               if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 0.8*avg_z_depthROI) {
 
                 // Usar a distancia do depth map para a PCL RGB
@@ -187,6 +184,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
               pointPCLRGB.x = (pointPCLRGB.z * j - pointPCLRGB.z * left_cam.cx) / left_cam.fx;
               pointPCLRGB.y = (pointPCLRGB.z * i - pointPCLRGB.z * left_cam.cy) / left_cam.fy;
 
+              //Obter valores RGB da imagem para publicar ponto XYZRGB
                if(!leftimg.empty()){
                    pointPCLRGB.r = leftimg.at<cv::Vec3b>(i,j)[2];
                    pointPCLRGB.g = leftimg.at<cv::Vec3b>(i,j)[1];
@@ -425,7 +423,7 @@ int main(int argc, char **argv)
    // Second Callback -> subscribe das bounding boxes
    ros::Subscriber sub_boundingBoxes = n_public.subscribe<darknet_ros_msgs::BoundingBoxes>("/objects/left/bounding_boxes", 1, cb_BoundingBoxes);
 
-
+   //Receber parametros que contem o nome das frames ( neste caso -> vision_frame e velodyne
    n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);
    n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
 
@@ -435,6 +433,7 @@ int main(int argc, char **argv)
    pubSizeCar = n_public.advertise<geometry_msgs::Point>("/nearest_car_size", 1);
    pubDepthmap = it.advertise("/depthMap_pub", 1);
 
+   //Algoritmo para obter informação da camera (fx,fy,cx,cy,height e width)
    boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;
    sensor_msgs::CameraInfo cam_info_msg;
 
