@@ -3,11 +3,6 @@
 
 void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 {
-   //Meu v2
-
-//    msg_cloudXYZRGB->header.frame_id = "vision_frame";
-//    pcl_conversions::toPCL(ros::Time::now(), msg_cloudXYZRGB->header.stamp);
-//    msg_cloudXYZRGB->height = 1;
 
    PointCloudXYZ::Ptr cloud_toPublish (new PointCloudXYZ);
 
@@ -34,9 +29,6 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 //    ROS_ERROR("Max x: %f", maxpt.x);
 //    ROS_ERROR("Max y: %f", maxpt.y);
 //    ROS_ERROR("Max z: %f", maxpt.z);
-
-
-
 
    int u, v, posFinal_px, posFinal_py, pxValue;
 
@@ -73,7 +65,6 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
    cloud_toPublish->width = cloud_toPublish->points.size();
    publisherCloudXYZ.publish(cloud_toPublish);
 
-
 //    cv::imshow("Depth Map", depthMap);
 //    cv::waitKey(1);
 
@@ -101,10 +92,8 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
    width_img = leftimg.size().width;
    height_img = leftimg.size().height;
 
-
 //    cv::imshow("img_orig", leftimg);
 //    cv::waitKey(1);
-   //ROS_ERROR("BOAS");
 
    //Interessa a ordem q se faz isto? aka primeiro transform e dps fromrosmsg ou ao contrario?
    sensor_msgs::PointCloud2::Ptr result (new sensor_msgs::PointCloud2);
@@ -117,32 +106,30 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
    calculate_depthmap(msg_cloudXYZ, depthMap_global);
 
 
-   if(!leftimg.empty()){
-     if(ROI_xmin_closest > 0 && ROI_xmax_closest > 0 &&  ROI_ymin_closest > 0 && ROI_ymax_closest > 0){
-       // Show bounding box
-       rectangle( leftimg, cv::Point(ROI_xmin_closest, ROI_ymin_closest), cv::Point(ROI_xmax_closest, ROI_ymax_closest), cv::Scalar(0,215,255) );
+//   if(!leftimg.empty()){
+//     if(ROI_xmin_closest > 0 && ROI_xmax_closest > 0 &&  ROI_ymin_closest > 0 && ROI_ymax_closest > 0){
+//       // Show bounding box
+//       rectangle( leftimg, cv::Point(ROI_xmin_closest, ROI_ymin_closest), cv::Point(ROI_xmax_closest, ROI_ymax_closest), cv::Scalar(0,215,255) );
 
-       for(int i=0; i< BB_cars.bounding_boxes.size(); i++){
-         if(BB_cars.bounding_boxes[i].id != best_bb_id){
-           rectangle( leftimg, cv::Point(BB_cars.bounding_boxes[i].xmin, BB_cars.bounding_boxes[i].ymin), cv::Point(BB_cars.bounding_boxes[i].xmax, BB_cars.bounding_boxes[i].ymax), cv::Scalar(110,198,120) );
-         }
+//       for(int i=0; i< BB_cars.bounding_boxes.size(); i++){
+//         if(BB_cars.bounding_boxes[i].id != best_bb_id){
+//           rectangle( leftimg, cv::Point(BB_cars.bounding_boxes[i].xmin, BB_cars.bounding_boxes[i].ymin), cv::Point(BB_cars.bounding_boxes[i].xmax, BB_cars.bounding_boxes[i].ymax), cv::Scalar(110,198,120) );
+//         }
 
-       }
+//       }
 
-       // Show center
+//       // Show center
 
 
-       rectangle( leftimg, cv::Point(centroidX-THRESHOLD_CENTROID, centroidY-THRESHOLD_CENTROID), cv::Point(centroidX+THRESHOLD_CENTROID, centroidY+THRESHOLD_CENTROID), cv::Scalar(184,53,255) );
-     }
-//     cv::imshow("img_orig", leftimg);
-//     cv::waitKey(1);
-   }
+//       rectangle( leftimg, cv::Point(centroidX-THRESHOLD_CENTROID, centroidY-THRESHOLD_CENTROID), cv::Point(centroidX+THRESHOLD_CENTROID, centroidY+THRESHOLD_CENTROID), cv::Scalar(184,53,255) );
+//     }
+////     cv::imshow("img_orig", leftimg);
+////     cv::waitKey(1);
+//   }
 
 
 
   //Publish car PCL |A3|
-
-
   PointCloudXYZRGB::Ptr cloudRGB_toPublish (new PointCloudXYZRGB);
 
   cloudRGB_toPublish->header.frame_id = "vision_frame";
@@ -150,14 +137,6 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
   cloudRGB_toPublish->height = 1;
   std::vector<cv::Point2f> centers;
 
-  //pointPCLRGB.z = depthMap_input.at<float>(i,j);
-  //cv::kmeans(InputArray data, 2, InputOutputArray bestLabels, TermCriteria criteria, int flags, OutputArray centers)
-  //cv::kmeans(data, K ,labels,cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.),MAX_ITERATIONS,cv::KMEANS_PP_CENTERS,colors);
-
-  //std::vector<int> kmeans_output;
-  //cv::kmeans(depthMap_global, 2, kmeans_output, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.), 5, cv::KMEANS_PP_CENTERS);
-
-  //kmeans(points, clusterCount, labels,TermCriteria( TermCriteria::EPS+TermCriteria::COUNT, 10, 1.0), 3, KMEANS_PP_CENTERS, centers);
   float avg_z_depthROI=0;
   int aux = 0;
   if(!depthMap_global.empty()) {
@@ -173,7 +152,9 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
   }
 
   avg_z_depthROI = avg_z_depthROI/aux;
+
   //ROS_ERROR("Media = %f", avg_z_depthROI);
+
   float PCLRGB_xmin = 100000, PCLRGB_xmax = 0, PCLRGB_ymin = 100000, PCLRGB_ymax = 0;
 
   for (int i = 0; i < depthMap_global.size().height; i++) {
@@ -182,8 +163,6 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
           if(j > ROI_xmin_closest && j < ROI_xmax_closest && i > ROI_ymin_closest && i < ROI_ymax_closest) {
               pcl::PointXYZRGB pointPCLRGB;
 
-
-              //if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 1000) {
               if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 0.8*avg_z_depthROI) {
 
                   pointPCLRGB.z = depthMap_global.at<float>(i,j);
@@ -223,11 +202,10 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
                }
 
 
-//                if(pointPCLRGB.z > 2000)
-//                ROS_ERROR("i = %d j = %d", i, j);
-              //ROS_ERROR("%f %f", left_cam.width, left_cam.height);
-              //ROS_ERROR("%d %d %d %d", ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
-              //ROS_ERROR("x = %f  y = %f  z = %f  r= %d g = %d b = %d", pointPCLRGB.x, pointPCLRGB.y, pointPCLRGB.z, pointPCLRGB.r, pointPCLRGB.g, pointPCLRGB.b);
+//              ROS_ERROR("i = %d j = %d", i, j);
+//              ROS_ERROR("%f %f", left_cam.width, left_cam.height);
+//              ROS_ERROR("%d %d %d %d", ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
+//              ROS_ERROR("x = %f  y = %f  z = %f  r= %d g = %d b = %d", pointPCLRGB.x, pointPCLRGB.y, pointPCLRGB.z, pointPCLRGB.r, pointPCLRGB.g, pointPCLRGB.b);
 
 
               cloudRGB_toPublish->points.push_back(pointPCLRGB);
@@ -358,29 +336,6 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
    biggest_width = ROI_xmax_closest - ROI_xmin_closest;
    biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
-//    centerX = ROI_xmin_closest + biggest_width/2;
-//    centerY = ROI_ymin_closest + biggest_height/2;
-
-//    // Create a smaller bounding box around the center of the object
-//    float min_dp1 = 100000000;
-//    for(int x = centerX-THRESHOLD_CENTROID; x < centerX+THRESHOLD_CENTROID; x++){
-//      for(int y = centerY-THRESHOLD_CENTROID; y < centerY+THRESHOLD_CENTROID; y++){
-//        if(centerX-THRESHOLD_CENTROID >= 0 &&
-//           centerY-THRESHOLD_CENTROID >= 0 &&
-//           centerX+THRESHOLD_CENTROID < width_img &&
-//           centerY+THRESHOLD_CENTROID < height_img
-//           ){
-//          dp = depthMap_global.at<float>(y, x);
-//          //ROS_ERROR("DP = %f", dp);
-//          if(dp < min_dp1 && dp > 0){
-//           min_dp1 = dp;
-//          }
-//        }
-//      }
-//    }
-
-//    ROS_ERROR("Closest Distance: %f", min_dp1);
-
    // Calculate centroid of ROI with cloudRGB_toPublish
    pcl::CentroidPoint<pcl::PointXYZ> centroid;
 
@@ -443,10 +398,6 @@ int main(int argc, char **argv)
 
    tf_listener = new tf::TransformListener();
 
-   //std::string teste;
-   //n_public.getParam("/object_3d_estimation/teste", teste);
-   //ROS_ERROR("%s", teste.c_str());
-
    // First sincronization
    image_transport::ImageTransport it(n_public);
    //image_transport::Subscriber sub_imgleft = it.subscribe("/stereo/left/image_rect_color", 1, left_imgCB);
@@ -499,17 +450,6 @@ int main(int argc, char **argv)
    message_filters::Synchronizer<ApproximatePolicy> sync(ApproximatePolicy(10), sub_imgleft, sub_pclrgb);
    sync.registerCallback(boost::bind(&callback_img_pcl, _1, _2));
 
-   /*
-   // rate em Hertz
-   ros::Rate rate(10);
-
-   while(ros::ok())
-   {
-       ros::spinOnce(); // for listening to subscriptions
-
-
-       rate.sleep();
-   }*/
 
    ros::spin();
 

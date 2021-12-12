@@ -25,12 +25,16 @@ void left_imgCB (const sensor_msgs::ImageConstPtr& msg_img)
             putText(leftimg, coord, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin - 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(255, 255, 255), 1.8, cv::LINE_AA);
             putText(leftimg, sizeCar, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymax + 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(255, 255, 255), 1.8, cv::LINE_AA);
 
-            rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(0,0,255));
+            putText(leftimg, "!!! HAZARD !!! !!! HAZARD !!! !!! HAZARD !!!", cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin - 45), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(0, 0, 255), 1.8, cv::LINE_AA);
+                        putText(leftimg, "!!! HAZARD !!! !!! HAZARD !!! !!! HAZARD !!!", cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymax + 45), cv::FONT_HERSHEY_COMPLEX, 0.7, cvScalar(0, 0, 255), 1.8, cv::LINE_AA);
+                        rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(0,0,255), 2);
+
+            rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(0,0,255),2);
 
 
         }
         else
-            rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(110,198,120));
+            rectangle(leftimg, cv::Point(BBs.bounding_boxes[i].xmin, BBs.bounding_boxes[i].ymin), cv::Point(BBs.bounding_boxes[i].xmax, BBs.bounding_boxes[i].ymax), cv::Scalar(110,198,120), 2);
 
     }
 
@@ -69,8 +73,6 @@ void cb_nearestBB (const darknet_ros_msgs::BoundingBox::ConstPtr& msg_BB)
     nearestBB.id = msg_BB->id;
 
     //ROS_ERROR("Nearest BoundingBox: %d %d %d %d", nearestBB.xmax, nearestBB.xmin, nearestBB.ymax, nearestBB.ymin);
-
-
 }
 
 
@@ -80,7 +82,6 @@ void cb_poseXYZ(const geometry_msgs::PoseStamped::ConstPtr& msg)
     tf_listener->transformPose("/base_link", *msg, poseXYZ);
 
     //ROS_ERROR("x = %f  y = %f  z= %f", poseXYZ.pose.position.x, poseXYZ.pose.position.y, poseXYZ.pose.position.z);
-
 }
 
 
@@ -88,7 +89,6 @@ void cb_carSize(const geometry_msgs::Point::ConstPtr& msg_car_size){
 
   nearest_car_width = msg_car_size->x;
   nearest_car_height = msg_car_size->y;
-
 }
 
 
@@ -98,17 +98,15 @@ void cb_pubDepthmap(const sensor_msgs::ImageConstPtr& msg) {
 
     cv::Mat depthROI = cv::Mat(depthMap, cv::Rect(cv::Point(nearestBB.xmin, nearestBB.ymin), cv::Point(nearestBB.xmax, nearestBB.ymax)));
 
-
     cv::Mat output;
     cv::applyColorMap(depthROI,output, cv::COLORMAP_HOT);
 
 
-        cv::imshow("depth", output);
-        cv::waitKey(1);
+//    cv::imshow("depth", output);
+//    cv::waitKey(1);
 
 //    cv::imshow("depth", depthMap2);
 //    cv::waitKey(1);
-
 }
 
 
@@ -119,21 +117,11 @@ int main(int argc, char **argv)
    ros::NodeHandle n_public;
    ros::NodeHandle n_private("~");
 
-   //tf_listener = new tf::TransformListener();
 
-
-   // First sincronization
    image_transport::ImageTransport it(n_public);
+
    image_transport::Subscriber sub_imgleft = it.subscribe("/stereo/left/image_rect_color", 1, left_imgCB);
-   //message_filters::Subscriber<sensor_msgs::Image> sub_imgleft(n_public, "/stereo/left/image_rect_color", 1);
-   //ros::Subscriber sub_pclrgb = n_public.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, pclCB);
-   //message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pclrgb(n_public, "/velodyne_points", 1);
-
-
-
    ros::Subscriber sub_boundingBoxes = n_public.subscribe<darknet_ros_msgs::BoundingBoxes>("/objects/left/bounding_boxes", 1, cb_BoundingBoxes);
-   //message_filters::Subscriber<darknet_ros_msgs::BoundingBoxes> sub_boundingBoxes(n_public, "/objects/left/bounding_boxes", 1);
-
    ros::Subscriber sub_nearestBB = n_public.subscribe<darknet_ros_msgs::BoundingBox>("/nearest_car", 1, cb_nearestBB);
    ros::Subscriber sub_poseXYZ = n_public.subscribe<geometry_msgs::PoseStamped>("/nearest_Pose", 1, cb_poseXYZ);
    ros::Subscriber sub_carSize = n_public.subscribe<geometry_msgs::Point>("/nearest_car_size", 1, cb_carSize);
@@ -167,6 +155,7 @@ int main(int argc, char **argv)
        }
    }
 
+
    tf_listener = new tf::TransformListener();
 
    try {
@@ -176,25 +165,6 @@ int main(int argc, char **argv)
        ros::Duration(1.0).sleep();
      }
 
-
-/*
-   //Source https://answers.ros.org/question/256238/solved-c-approximatetime-with-more-than-two-topics/
-   //Source 7.3 http://wiki.ros.org/message_filters?distro=hydro#Time_Synchronizer
-   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, darknet_ros_msgs::BoundingBoxes> ApproximatePolicy;
-   message_filters::Synchronizer<ApproximatePolicy> sync(ApproximatePolicy(10), sub_imgleft, sub_boundingBoxes);
-   sync.registerCallback(boost::bind(&mainCBack, _1, _2));*/
-
-   /*
-   // rate em Hertz
-   ros::Rate rate(10);
-
-   while(ros::ok())
-   {
-       ros::spinOnce(); // for listening to subscriptions
-
-
-       rate.sleep();
-   }*/
 
    ros::spin();
 
