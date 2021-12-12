@@ -79,6 +79,10 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 
    output = pxI_toPublish;
 
+   pxI_toPublish.convertTo(pxI_toPublish, CV_8UC1);
+   sensor_msgs::ImagePtr msg_to_publish = cv_bridge::CvImage(std_msgs::Header(), "mono8", depthMap).toImageMsg();
+   pubDepthmap.publish(msg_to_publish);
+
 //    cv::imshow("To publish", pxI_toPublish);
 //    cv::waitKey(1);
 }
@@ -462,7 +466,7 @@ int main(int argc, char **argv)
    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/nearest_Pose", 1);
    pubNearestCar = n_public.advertise<darknet_ros_msgs::BoundingBox>("/nearest_car", 1);
    pubSizeCar = n_public.advertise<geometry_msgs::Point>("/nearest_car_size", 1);
-
+   pubDepthmap = it.advertise("/depthMap_pub", 1);
 
    boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;
    sensor_msgs::CameraInfo cam_info_msg;

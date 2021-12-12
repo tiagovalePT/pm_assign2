@@ -73,6 +73,7 @@ cam_param left_cam;
 ros::Publisher pubPose;
 ros::Publisher pubNearestCar;
 ros::Publisher publisherCloudXYZ, publisherCloudXYZRGB;
+image_transport::Publisher pubDepthmap;
 ros::Publisher pubSizeCar;
 
 #endif // OBJECT_3D_ESTIMATION_H
