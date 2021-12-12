@@ -26,10 +26,17 @@
 
 #define THRESHOLD_CENTROID 10
 
+// Imagens usadas
 cv::Mat img1, img_car, cropedImage, cropedDepthMap;
+
+// Coordenadas da region of interest
 int ROI_xmin, ROI_xmax, ROI_ymin, ROI_ymax;
 int ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest;
+
+// Tamanho em pixels da imagem da camera
 int width_camera, height_camera, closerX, closerY;
+
+//Variaveis Auxiliares e contadores
 int count_BB = 0, sum_sizesBB = 0, width, height, size_bb, best_bb_id, best_bb_size;
 float min_dp = 100000000, dp;
 int biggest_width, biggest_height;
@@ -39,8 +46,10 @@ int centroidX = 0, centroidY = 0;
 
 int width_img = 0, height_img = 0;
 
+// Msg BoundingBoxes que guarda todas as bounding boxes que têm como classe "car"
 darknet_ros_msgs::BoundingBoxes BB_cars;
 
+// Point Clouds XYZ e XYZRGB
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudXYZ;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudXYZRGB;
 
@@ -50,16 +59,21 @@ PointCloudXYZ::Ptr cloud_for_centroid;
 PointCloudXYZ::Ptr cloud_of_centroid;
 PointCloudXYZRGB::Ptr msg_cloud_xyz_rgb;
 
+// Depth map
 cv::Mat depthMap_global;
 
+// Imagem da left camera
 cv::Mat leftimg;
 
+// Depth map cortada
 cv::Mat cropped_depthMap;
 
 std::string frame_id_img, frame_id_pointCloud;
 
+// Listener da transformada
 tf::TransformListener *tf_listener;
 
+// Struct dos parâmetros da camera
 struct cam_param {
   double fx, fy, cx, cy;
   double height, width;
@@ -70,6 +84,7 @@ int flag = 0;
 
 cam_param left_cam;
 
+// Publishers
 ros::Publisher pubPose;
 ros::Publisher pubNearestCar;
 ros::Publisher publisherCloudXYZ, publisherCloudXYZRGB;
