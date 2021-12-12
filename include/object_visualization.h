@@ -38,15 +38,16 @@
 #include <pcl/common/centroid.h>
 
 
-
+//Variaveis para o nome das frames
 std::string frame_id_img, frame_id_pointCloud;
 
-
+//Camera info
 struct cam_param {
   double fx, fy, cx, cy;
   double height, width;
 };
 
+//Dimensoes calculadas do carro
 float nearest_car_width, nearest_car_height;
 
 cam_param left_cam;
@@ -61,4 +62,5 @@ tf::TransformListener *tf_listener;
 
 geometry_msgs::PoseStamped poseXYZ;
 
+cv::Mat depthMapHeat;
 #endif // OBJECT_VISUALIZATION_H
