@@ -1,16 +1,17 @@
 #include "object_3d_estimation.h"
 
-
+// Função para calcular a depth map a partir da pointcloud XYZ
 void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 {
 
    PointCloudXYZ::Ptr cloud_toPublish (new PointCloudXYZ);
 
+   // Adiciona a timestamp e o header da depth map
    cloud_toPublish->header.frame_id = "vision_frame";
    pcl_conversions::toPCL(ros::Time::now(), cloud_toPublish->header.stamp);
    cloud_toPublish->height = 1;
 
-   // Calculate the FOV of the camera (in x)
+   // Calcula o FOV da camera -> acabou por não ser utilizado neste trbaalho
 //    fov_x = 2 * atan2( left_cam.width, (2*left_cam.fx) );
 //    fov_y = 2 * atan2( left_cam.height, (2*left_cam.fy) );
 
@@ -20,6 +21,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 
    cv::Mat pxI_toPublish = cv::Mat::zeros(left_cam.height, left_cam.width, CV_32FC1);
 
+   // Obtem o valor minimo e máximo da pointcloud
    pcl::PointXYZ minpt, maxpt;
    pcl::getMinMax3D(*PclXYZ,minpt,maxpt);
 
@@ -34,6 +36,7 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 
    double x, y, z;
 
+   // Percorre todos os pontos da point cloud -> calcula o u e v a partir do (x,y,z) da pcl
    for (int i = 0; i < PclXYZ->points.size(); i++) {
        if(PclXYZ->points[i].z == PclXYZ->points[i].z) {
            x = PclXYZ->points[i].x;
@@ -45,8 +48,9 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 
 
            pxValue = 0;
-           pxValue = 255 - (z-minpt.z)/(maxpt.z-minpt.z)*200; //mudar isto para as contas q eu tinha se tiver bem
+           pxValue = 255 - (z-minpt.z)/(maxpt.z-minpt.z)*200;
 
+           // Verifica também se os valores de u e v não ultrapassam o tamanho da imagem da camera
            if(u >= 0 && u < left_cam.width && v >= 0 && v < left_cam.height && z >= 0) {
                depthMap.at<uint8_t>(v, u) = pxValue;
                pxI_toPublish.at<float>(v, u) = z;
@@ -86,26 +90,27 @@ void calculate_depthmap (const PointCloudXYZ::Ptr& PclXYZ, cv::Mat& output)
 
 void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_msgs::PointCloud2ConstPtr& msg_pcl)
 {
-
+   // Conversão da imagem obtida da camera
    leftimg = cv_bridge::toCvShare(msg_img, "bgr8")->image;
 
+   // Guardar os tamanhos da imagem
    width_img = leftimg.size().width;
    height_img = leftimg.size().height;
 
 //    cv::imshow("img_orig", leftimg);
 //    cv::waitKey(1);
 
-   //Interessa a ordem q se faz isto? aka primeiro transform e dps fromrosmsg ou ao contrario?
+   //
    sensor_msgs::PointCloud2::Ptr result (new sensor_msgs::PointCloud2);
    pcl_ros::transformPointCloud(frame_id_img, *msg_pcl, *result, *tf_listener);
 
    PointCloudXYZ::Ptr msg_cloudXYZ (new PointCloudXYZ);
    pcl::fromROSMsg(*result, *msg_cloudXYZ);
 
-
+  // Chamada da função que calcula o depth map
    calculate_depthmap(msg_cloudXYZ, depthMap_global);
 
-
+   // Debug: para mostrar as bounding boxes sem o node object_visualization
 //   if(!leftimg.empty()){
 //     if(ROI_xmin_closest > 0 && ROI_xmax_closest > 0 &&  ROI_ymin_closest > 0 && ROI_ymax_closest > 0){
 //       // Show bounding box
@@ -139,6 +144,8 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
   float avg_z_depthROI=0;
   int aux = 0;
+
+  // Calcular a média da depth map dentro da region of interest
   if(!depthMap_global.empty()) {
       for (int i = ROI_ymin_closest; i < ROI_ymax_closest; i++) {
           for (int j = ROI_xmin_closest; j <ROI_xmax_closest; j++) {
@@ -157,6 +164,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
   float PCLRGB_xmin = 100000, PCLRGB_xmax = 0, PCLRGB_ymin = 100000, PCLRGB_ymax = 0;
 
+  // Função que cria a point cloud RGB a partir da depth map e dos pontos da left camera -> só para os pontos que estão na region of interest
   for (int i = 0; i < depthMap_global.size().height; i++) {
       for (int j = 0; j < depthMap_global.size().width; j++) {
 
@@ -165,6 +173,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
               if(depthMap_global.at<float>(i,j) > 0 && depthMap_global.at<float>(i,j) < 0.8*avg_z_depthROI) {
 
+                // Usar a distancia do depth map para a PCL RGB
                   pointPCLRGB.z = depthMap_global.at<float>(i,j);
 
               //ROS_ERROR("z= %f", pointPCLRGB.z);
@@ -174,6 +183,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
                   continue;
               }
 
+              // Calculo do x e y da PCLRGB a partir do z e dos parâmetros da camera
               pointPCLRGB.x = (pointPCLRGB.z * j - pointPCLRGB.z * left_cam.cx) / left_cam.fx;
               pointPCLRGB.y = (pointPCLRGB.z * i - pointPCLRGB.z * left_cam.cy) / left_cam.fy;
 
@@ -183,7 +193,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
                    pointPCLRGB.b = leftimg.at<cv::Vec3b>(i,j)[0];
                }
 
-               // Min and Max distances of x and y -> to calculate width and height of car
+               // Distância minimas e máximas de x e y -> usadas para o cálculo do width e height do car (valorização do A3)
                if(pointPCLRGB.x < PCLRGB_xmin)
                {
                  PCLRGB_xmin = pointPCLRGB.x;
@@ -222,6 +232,7 @@ void callback_img_pcl (const sensor_msgs::ImageConstPtr& msg_img, const sensor_m
 
   geometry_msgs::Point size_car;
 
+  // Calculo do tamanho do carro -> width e height (valorização do A3)
   size_car.x = PCLRGB_xmax - PCLRGB_xmin;
   size_car.y = PCLRGB_ymax - PCLRGB_ymin;
 
@@ -239,7 +250,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
    int mean_BB = 0;
    darknet_ros_msgs::BoundingBox BoundingBox_cars;
 
-   // Guardar todas as bounding boxes de carros
+   // Guardar todas as bounding boxes cuja Class é "car" para uma mensagem do tipo darknet_ros_msgs::BoundingBoxes para ir encurtando a escolha de bounding boxes
    BB_cars.bounding_boxes.clear();
    count_BB = 0;
    sum_sizesBB = 0;
@@ -288,6 +299,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
    //ROS_ERROR("Median of bb size: %d", mean_BB);
    min_dp = 100000000;
+
    // Calcular a menor distância a partir do depth map de cada bounding box (unicamente das que têm um tamanho maior do que a média)
    for(int j = 0; j < BB_cars.bounding_boxes.size(); j++){
      width = (int) BB_cars.bounding_boxes[j].xmax - BB_cars.bounding_boxes[j].xmin;
@@ -315,7 +327,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
            }
          }
        }
-       // Ver qual a bounding box que tem o valor mais pequeno para a distância
+       // Ver qual a bounding box que tem o valor mais pequeno para a distância -> esta vai ser a bounding box onde vai ser verificada a distãncia para o hazard
        if(min_dp_frame < min_dp){
          min_dp = min_dp_frame;
 
@@ -332,11 +344,11 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
    //ROS_ERROR("Best BoundingBox: %d | d: %f | %d %d %d %d", best_bb_id, min_dp, ROI_xmin_closest, ROI_xmax_closest, ROI_ymin_closest, ROI_ymax_closest);
 
 
-
+   // Tamanho da Region of interest
    biggest_width = ROI_xmax_closest - ROI_xmin_closest;
    biggest_height = ROI_ymax_closest - ROI_ymin_closest;
 
-   // Calculate centroid of ROI with cloudRGB_toPublish
+   // Calcular centroid do ROI com a cloudRGB_toPublish
    pcl::CentroidPoint<pcl::PointXYZ> centroid;
 
    for(int i=0; i < cloudRGB_global->points.size(); i++){
@@ -371,7 +383,7 @@ void cb_BoundingBoxes(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg_BB){
 
    pubPose.publish(poseVF);
 
-   // Publish the bounding box from the nearest car -> This will be used in A4 (object_visualization)
+   // Publicar a bounding box do carro mais perto -> Vai ser usado no A4 (object_visualization)
    darknet_ros_msgs::BoundingBox nearest_car;
    nearest_car.id = best_bb_id;
    nearest_car.xmax = ROI_xmax_closest;
@@ -398,22 +410,26 @@ int main(int argc, char **argv)
 
    tf_listener = new tf::TransformListener();
 
-   // First sincronization
    image_transport::ImageTransport it(n_public);
-   //image_transport::Subscriber sub_imgleft = it.subscribe("/stereo/left/image_rect_color", 1, left_imgCB);
+
+   // os subscribers da image_rect_color e do velodyne estão a ser sincronizados -> ambos usam a mesma callback
    message_filters::Subscriber<sensor_msgs::Image> sub_imgleft(n_public, "/stereo/left/image_rect_color", 1);
-   //ros::Subscriber sub_pclrgb = n_public.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, pclCB);
    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pclrgb(n_public, "/velodyne_points", 1);
 
-   publisherCloudXYZ = n_public.advertise<PointCloudXYZ>("PCLTESTE",1);
-   publisherCloudXYZRGB = n_public.advertise<PointCloudXYZRGB>("CARRO",1);
+   // Valorização do A2 - "Publish a point cloud of all points XYZ that have texture"
+   publisherCloudXYZ = n_public.advertise<PointCloudXYZ>("/pcl_XYZ_withTexture",1);
 
-   // Second Callback
+   // Resultado do A3 - "Publish the 3D+Texture (color) for the closest car"
+   publisherCloudXYZRGB = n_public.advertise<PointCloudXYZRGB>("/3d_texture_closest_car",1);
+
+   // Second Callback -> subscribe das bounding boxes
    ros::Subscriber sub_boundingBoxes = n_public.subscribe<darknet_ros_msgs::BoundingBoxes>("/objects/left/bounding_boxes", 1, cb_BoundingBoxes);
 
 
    n_public.getParam("/object_3d_estimation/left_img_frameId", frame_id_img);
    n_public.getParam("/object_3d_estimation/pointCloud_frameId", frame_id_pointCloud);
+
+   // Publicações que serão usados no A4 (object_visualization)
    pubPose = n_public.advertise<geometry_msgs::PoseStamped>("/nearest_Pose", 1);
    pubNearestCar = n_public.advertise<darknet_ros_msgs::BoundingBox>("/nearest_car", 1);
    pubSizeCar = n_public.advertise<geometry_msgs::Point>("/nearest_car_size", 1);
@@ -422,6 +438,7 @@ int main(int argc, char **argv)
    boost::shared_ptr<sensor_msgs::CameraInfo const> cam_info;
    sensor_msgs::CameraInfo cam_info_msg;
 
+   // Ciclo que espera até receber as informações da camera: /stereo/left/camera_info
    while (cam_info == NULL) {
 
        cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/stereo/left/camera_info", ros::Duration(5));
@@ -442,10 +459,7 @@ int main(int argc, char **argv)
        }
    }
 
-
-
-   //Source https://answers.ros.org/question/256238/solved-c-approximatetime-with-more-than-two-topics/
-   //Source 7.3 http://wiki.ros.org/message_filters?distro=hydro#Time_Synchronizer
+   // Sincronização da leitura dos 2 nodes
    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> ApproximatePolicy;
    message_filters::Synchronizer<ApproximatePolicy> sync(ApproximatePolicy(10), sub_imgleft, sub_pclrgb);
    sync.registerCallback(boost::bind(&callback_img_pcl, _1, _2));
